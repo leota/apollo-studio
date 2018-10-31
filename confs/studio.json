@@ -1,0 +1,20 @@
+{
+  "theme": {
+    "name": {
+      "description": "The name of the studio theme",
+      "value": "dark",
+      "choices": [
+        "dark",
+        "light"
+      ]
+    },
+    "accentColor": {
+      "description": "The predominant color of the studio User Interface",
+      "value": "#0078D7"
+    },
+    "fontSize": {
+      "description": "The dimensions of texts",
+      "value": "14px"
+    }
+  }
+}

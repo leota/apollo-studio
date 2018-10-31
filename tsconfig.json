@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "removeComments": false,
+    "removeComments": true,
     "preserveConstEnums": true,
     "sourceMap": true,
     "declaration": true,
@@ -15,6 +15,9 @@
     "noEmitHelpers": true,
     "module": "commonjs",
     "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "pretty": true,
     "target": "es2015",
     "jsx": "react"
@@ -22,5 +25,18 @@
   "formatCodeOptions": {
     "indentSize": 2,
     "tabSize": 2
-  }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "typeRoots": [
+    "./node_modules/@types"
+  ],
+  "filesGlob": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "files": [
+    "node_modules/react-uwp/index.d.ts"
+  ]
 }
