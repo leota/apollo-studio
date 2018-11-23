@@ -30,5 +30,35 @@ export interface Project {
   rest: Rest;
   views: Views;
   cors: Cors;
-  remotes: Remotes;
+  remotes?: Remotes;
 }
+
+export const initialProject = {
+  'id': '',
+  'name': '',
+  'targetDomain': '',
+  'defaults': {
+    'port': 3000,
+    'addr': 'localhost'
+  },
+  'graphql': {
+    'path': '/graphql'
+  },
+  'rest': {
+    'path': '/api'
+  },
+  'views': {
+    'src': '__root/server/views/',
+    'engine': 'ejs'
+  },
+  'cors': {
+    'acceptedDomains': ['*'],
+    'methods': ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    'preflightContinue': false,
+    'optionsSuccessStatus': 200
+  },
+  'remotes': {
+    'getCookies': 'https://cookiefarm.com/cookies',
+    'getBread': 'https://breadcorp.com/bread'
+  }
+};

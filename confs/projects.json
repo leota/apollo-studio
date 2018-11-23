@@ -1,5 +1,5 @@
 {
-  "acme-org": [
+  "org": [
     {
       "id": "bff-foobar",
       "name": "BFF FooBar",
@@ -19,8 +19,169 @@
         "engine": "ejs"
       },
       "cors": {
-        "acceptedDomains": ["*"],
-        "methods": ["GET","HEAD","PUT","PATCH","POST","DELETE"],
+        "acceptedDomains": [
+          "*"
+        ],
+        "methods": [
+          "GET",
+          "HEAD",
+          "PUT",
+          "PATCH",
+          "POST",
+          "DELETE"
+        ],
+        "preflightContinue": false,
+        "optionsSuccessStatus": 200
+      },
+      "remotes": {
+        "getCookies": "https://cookiefarm.com/cookies",
+        "getBread": "https://breadcorp.com/bread"
+      }
+    },
+    {
+      "id": "test",
+      "name": "test",
+      "targetDomain": "",
+      "defaults": {
+        "port": 3000,
+        "addr": "localhost"
+      },
+      "graphql": {
+        "path": "/graphql"
+      },
+      "rest": {
+        "path": "/api"
+      },
+      "views": {
+        "src": "__root/server/views/",
+        "engine": "ejs"
+      },
+      "cors": {
+        "acceptedDomains": [
+          "*"
+        ],
+        "methods": [
+          "GET",
+          "HEAD",
+          "PUT",
+          "PATCH",
+          "POST",
+          "DELETE"
+        ],
+        "preflightContinue": false,
+        "optionsSuccessStatus": 200
+      },
+      "remotes": {
+        "getCookies": "https://cookiefarm.com/cookies",
+        "getBread": "https://breadcorp.com/bread"
+      }
+    },
+    {
+      "id": "",
+      "name": "",
+      "targetDomain": "",
+      "defaults": {
+        "port": 3000,
+        "addr": "localhost"
+      },
+      "graphql": {
+        "path": "/graphql"
+      },
+      "rest": {
+        "path": "/api"
+      },
+      "views": {
+        "src": "__root/server/views/",
+        "engine": "ejs"
+      },
+      "cors": {
+        "acceptedDomains": [
+          "*"
+        ],
+        "methods": [
+          "GET",
+          "HEAD",
+          "PUT",
+          "PATCH",
+          "POST",
+          "DELETE"
+        ],
+        "preflightContinue": false,
+        "optionsSuccessStatus": 200
+      },
+      "remotes": {
+        "getCookies": "https://cookiefarm.com/cookies",
+        "getBread": "https://breadcorp.com/bread"
+      }
+    },
+    {
+      "id": "",
+      "name": "",
+      "targetDomain": "",
+      "defaults": {
+        "port": 3000,
+        "addr": "localhost"
+      },
+      "graphql": {
+        "path": "/graphql"
+      },
+      "rest": {
+        "path": "/api"
+      },
+      "views": {
+        "src": "__root/server/views/",
+        "engine": "ejs"
+      },
+      "cors": {
+        "acceptedDomains": [
+          "*"
+        ],
+        "methods": [
+          "GET",
+          "HEAD",
+          "PUT",
+          "PATCH",
+          "POST",
+          "DELETE"
+        ],
+        "preflightContinue": false,
+        "optionsSuccessStatus": 200
+      },
+      "remotes": {
+        "getCookies": "https://cookiefarm.com/cookies",
+        "getBread": "https://breadcorp.com/bread"
+      }
+    },
+    {
+      "id": "",
+      "name": "",
+      "targetDomain": "",
+      "defaults": {
+        "port": 3000,
+        "addr": "localhost"
+      },
+      "graphql": {
+        "path": "/graphql"
+      },
+      "rest": {
+        "path": "/api"
+      },
+      "views": {
+        "src": "__root/server/views/",
+        "engine": "ejs"
+      },
+      "cors": {
+        "acceptedDomains": [
+          "*"
+        ],
+        "methods": [
+          "GET",
+          "HEAD",
+          "PUT",
+          "PATCH",
+          "POST",
+          "DELETE"
+        ],
         "preflightContinue": false,
         "optionsSuccessStatus": 200
       },

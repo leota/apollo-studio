@@ -24,7 +24,7 @@ export default class Sidebar extends React.Component<SidebarProps, SidebarState>
     if (items) {
       const itemsEls = _.map(items, this.getItemElement);
       return (
-        <div className='sidebar'>
+        <div>
           <TextBox
             placeholder='Search...'
           />
@@ -33,7 +33,7 @@ export default class Sidebar extends React.Component<SidebarProps, SidebarState>
       );
     } else {
       return (
-        <div className='sidebar'>
+        <div>
           Loading projects
         </div>
       );

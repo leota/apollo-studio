@@ -1,5 +1,11 @@
 import * as localProjects from '../../confs/projects.json';
-import { writeFileSync, existsSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync } from 'fs';
+
+import * as GitDownload from 'download-git-repo';
+
+import { getProjectPath } from '../utils/common';
+
+import { Project } from '../models/project';
 
 export class ProjectService {
   private static currentProjects: any;
@@ -10,6 +16,7 @@ export class ProjectService {
   }
 
   public getServices(): any {
+    // TODO: Reload JSON
     return ProjectService.currentProjects;
   }
 
@@ -28,19 +35,37 @@ export class ProjectService {
     }
   }
 
-  public saveProject(): void {
-    if (existsSync(this.filePath)) {
-      writeFileSync(
-        this.filePath,
-        JSON.stringify(
-          ProjectService.currentProjects,
-          null,
-          2
-        ),
-        'utf8'
-      );
-    } else {
-      throw new Error('Cannot find projects file');
-    }
+  public createProject(project: Project): Promise<boolean> {
+    return new Promise((resolve: any, reject: any) => {
+      if (project.id === '' || project.name === '') {
+        reject(new Error('Cannot create project with empty name'));
+      }
+
+      // TODO: 'org' shall be configured
+      ProjectService.currentProjects['org'].push(project);
+
+      // TODO: check if project already exists on the filesystem
+      if (existsSync(this.filePath)) {
+        GitDownload(
+          'marcellobarile/typescript-express-graphql-seed',
+          getProjectPath(project),
+          (err: any) => {
+            if (err) {
+              reject(new Error('Cannot download the repo'));
+            } else {
+              writeFileSync(
+                this.filePath,
+                JSON.stringify(ProjectService.currentProjects, null, 2),
+                'utf8'
+              );
+
+              resolve(true);
+            }
+          }
+        );
+      } else {
+        reject(new Error('Cannot find projects file'));
+      }
+    });
   }
 }
