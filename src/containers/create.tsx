@@ -1,13 +1,11 @@
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
-
-import update from 'immutability-helper';
+import Toast from 'react-uwp/Toast';
 
 import ServiceProperties from '../components/serviceProperties';
 
-import Toast from 'react-uwp/Toast';
-
 export interface ICreateProps {
+  projectId?: string;
   onSuccess?: () => void;
 }
 
@@ -48,7 +46,10 @@ export default class Create extends React.PureComponent<ICreateProps, CreateStat
         <h5 style={subHeader}>
           Create a new service
         </h5>
-        <ServiceProperties onSave={this.onSave} onError={this.onError} />
+        <ServiceProperties
+          onSave={this.onSave}
+          onError={this.onError}
+        />
         <Toast
           defaultShow={this.state.showSuccess}
           onToggleShowToast={showSuccess => this.setState({ showSuccess })}

@@ -23,15 +23,17 @@ interface AppState {
   services: any;
 }
 
-export class App extends React.Component<undefined, AppState> {
+interface AppProps {}
+
+export class App extends React.Component<AppProps, AppState> {
   private configService: ConfigService = new ConfigService();
   private projectService: ProjectService = new ProjectService();
 
-  constructor(props: any) {
+  constructor(props: AppProps) {
     super(props);
     this.state = {
       configurations: this.configService.getConfigurations(),
-      services: this.projectService.getServices(),
+      services: this.projectService.getProjects(),
     };
 
     this.refresh = this.refresh.bind(this);
@@ -39,6 +41,7 @@ export class App extends React.Component<undefined, AppState> {
 
   public render() {
     return (
+      <Router>
       <UWPThemeProvider
         theme={getTheme({
           themeName: this.state.configurations.theme.name.value,
@@ -50,17 +53,16 @@ export class App extends React.Component<undefined, AppState> {
           <Sidebar items={this.state.services} />
         </div>
         <div className='content'>
-          <Router>
             <Switch>
-              <Route path='/' exact component={() => <Create onSuccess={this.refresh} />} />
-              <Route path='/create' exact component={() => <Welcome />} />
-              <Route path='/edit' exact component={() => <Edit />} />
-              <Route path='/run' exact component={() => <Run />} />
-              <Route path='/new/resolver' exact component={() => <RegisterResolver />} />
+              <Route path='/' exact component={(props: any) => <Welcome {...props} />} />
+              <Route path='/create' exact component={(props: any) => <Create {...props} onSuccess={this.refresh} />} />
+              <Route path='/edit/:id' exact component={(props: any) => <Edit {...props} onSuccess={this.refresh} />} />
+              <Route path='/run' exact component={(props: any) => <Run {...props} />} />
+              <Route path='/new/resolver' exact component={(props: any) => <RegisterResolver {...props} />} />
             </Switch>
-          </Router>
         </div>
       </UWPThemeProvider>
+      </Router>
     );
   }
 
@@ -70,7 +72,7 @@ export class App extends React.Component<undefined, AppState> {
     this.setState(update(
       this.state,
       {
-        services: {$set: this.projectService.getServices()}
+        services: {$set: this.projectService.getProjects()}
       }
     ));
     */

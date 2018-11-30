@@ -1,23 +1,39 @@
-import * as localProjects from '../../confs/projects.json';
+import * as _ from 'lodash';
 import { writeFileSync, readFileSync, existsSync } from 'fs';
+import * as localProjects from '../../confs/projects.json';
 
 import * as GitDownload from 'download-git-repo';
 
-import { getProjectPath } from '../utils/common';
-
 import { Project } from '../models/project';
+import { ProcessingService } from './processingService';
+import { getProjectPath } from '../utils/common';
 
 export class ProjectService {
   private static currentProjects: any;
   private filePath: string = './confs/projects.json';
 
-  constructor() {
+  constructor(
+    private processingService: ProcessingService = new ProcessingService()
+  ) {
     ProjectService.currentProjects = localProjects;
   }
 
-  public getServices(): any {
-    // TODO: Reload JSON
-    return ProjectService.currentProjects;
+  public getProjects(): any {
+    return JSON.parse(
+      readFileSync('confs/projects.json', 'utf8')
+    );
+  }
+
+  public getProject(id: string): Project | undefined {
+    let output: Project | undefined = void 0;
+    _.each(ProjectService.currentProjects, (org: Project[]) => {
+      const project = _.find(org, {id});
+      if (project) {
+        console.log(project);
+        output = project;
+      }
+    });
+    return output;
   }
 
   public updateProject(org: string, projectId: string, newConf: any): boolean {
@@ -47,7 +63,7 @@ export class ProjectService {
       // TODO: check if project already exists on the filesystem
       if (existsSync(this.filePath)) {
         GitDownload(
-          'marcellobarile/typescript-express-graphql-seed',
+          'marcellobarile/typescript-express-graphql-seed#develop-apollo-2',
           getProjectPath(project),
           (err: any) => {
             if (err) {
@@ -59,7 +75,10 @@ export class ProjectService {
                 'utf8'
               );
 
-              resolve(true);
+              this.processingService
+                .postCreate(project)
+                .then(resolve)
+                .catch(reject);
             }
           }
         );

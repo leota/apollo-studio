@@ -137,7 +137,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
             icon='Save'
             onClick={() => { this.onSave(); }}
           >
-            Create
+            {this.props.service ? 'Save' : 'Create'}
           </Button>
         </div>
       </div>
@@ -145,6 +145,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
   }
 
   private onSave(): void {
+    // TODO: Update if already existing
     if (this.state.service) {
       this.projectService
       .createProject(this.state.service)
