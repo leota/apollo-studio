@@ -1,3 +1,5 @@
+import { Resolver, ResolverService } from '../services/resolverService';
+
 export interface Defaults {
   port: number;
   addr: string;
@@ -21,7 +23,7 @@ export interface Cors {
 export interface Remotes {
   [remoteName: string]: string;
 }
-export interface Project {
+export interface IProject {
   id: string;
   name: string;
   targetDomain: string;
@@ -31,10 +33,11 @@ export interface Project {
   views: Views;
   cors: Cors;
   remotes?: Remotes;
+  resolvers?: any;
 }
 
 export const initialProject = {
-  'id': '',
+  'id': btoa(String(Math.random() + new Date().getTime())),
   'name': '',
   'targetDomain': '',
   'defaults': {
@@ -62,3 +65,25 @@ export const initialProject = {
     'getBread': 'https://breadcorp.com/bread'
   }
 };
+
+export class Project implements IProject {
+  public id: string;
+  public name: string;
+  public targetDomain: string;
+  public defaults: Defaults;
+  public graphql: Graphql;
+  public rest: Rest;
+  public views: Views;
+  public cors: Cors;
+  public remotes: Remotes;
+
+  constructor(
+    data: IProject
+  ) {
+    Object.assign(this, data);
+  }
+
+  public get resolvers(): Resolver[] {
+    return new ResolverService().getResolversFromProject(this.id);
+  }
+}

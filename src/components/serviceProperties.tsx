@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 import update from 'immutability-helper';
 
 import { ProjectService } from '../services';
-import { Project, initialProject } from '../models/project';
+import { Project, initialProject, IProject } from '../models/project';
 
 import TextBox from 'react-uwp/TextBox';
 import CheckBox from 'react-uwp/CheckBox';
@@ -12,11 +12,11 @@ import Button from 'react-uwp/Button';
 interface ServicePropertiesProps {
   onSave?: () => void;
   onError?: () => void;
-  service?: Project;
+  service?: IProject;
 }
 
 interface ServicePropertiesState {
-  service?: Project;
+  service: IProject;
 }
 
 class ServiceProperties extends React.PureComponent<ServicePropertiesProps, ServicePropertiesState> {
@@ -31,17 +31,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
 
   public render() {
     const onNameChange = (value: any) => {
-      if (this.state.service) {
-        this.setState(
-          update(
-            this.state, {
-              service: {
-                id: {$set: this.slugify(value)}
-              }
-            }
-          )
-        );
-      }
+      /* do nothing */
     };
 
     return (
@@ -145,10 +135,9 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
   }
 
   private onSave(): void {
-    // TODO: Update if already existing
     if (this.state.service) {
       this.projectService
-      .createProject(this.state.service)
+      .saveProject('org', this.state.service)
       .then(() => {
         if (this.props.onSave) {
           this.props.onSave();

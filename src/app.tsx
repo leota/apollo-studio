@@ -20,7 +20,7 @@ import {
 
 interface AppState {
   configurations: any;
-  services: any;
+  projects: any;
 }
 
 interface AppProps {}
@@ -33,7 +33,8 @@ export class App extends React.Component<AppProps, AppState> {
     super(props);
     this.state = {
       configurations: this.configService.getConfigurations(),
-      services: this.projectService.getProjects(),
+      // Projects are grouped by "orgs"
+      projects: this.projectService.getProjects(),
     };
 
     this.refresh = this.refresh.bind(this);
@@ -50,7 +51,7 @@ export class App extends React.Component<AppProps, AppState> {
         })}
       >
         <div className='sidebar'>
-          <Sidebar items={this.state.services} />
+          <Sidebar items={this.state.projects} />
         </div>
         <div className='content'>
             <Switch>
@@ -72,7 +73,7 @@ export class App extends React.Component<AppProps, AppState> {
     this.setState(update(
       this.state,
       {
-        services: {$set: this.projectService.getProjects()}
+        projects: {$set: this.projectService.getProjects()}
       }
     ));
     */

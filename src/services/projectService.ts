@@ -4,7 +4,7 @@ import * as localProjects from '../../confs/projects.json';
 
 import * as GitDownload from 'download-git-repo';
 
-import { Project } from '../models/project';
+import { Project, IProject } from '../models/project';
 import { ProcessingService } from './processingService';
 import { getProjectPath } from '../utils/common';
 
@@ -19,9 +19,13 @@ export class ProjectService {
   }
 
   public getProjects(): any {
-    return JSON.parse(
+    const orgs = JSON.parse(
       readFileSync('confs/projects.json', 'utf8')
     );
+    // Mapping JSON to Classes
+    const out: any = {};
+    _.each(orgs, (org: any) => out[org] = _.map(org, (project: Project) => new Project(project)));
+    return out;
   }
 
   public getProject(id: string): Project | undefined {
@@ -29,36 +33,40 @@ export class ProjectService {
     _.each(ProjectService.currentProjects, (org: Project[]) => {
       const project = _.find(org, {id});
       if (project) {
-        console.log(project);
         output = project;
       }
     });
     return output;
   }
 
-  public updateProject(org: string, projectId: string, newConf: any): boolean {
-    const organization = ProjectService.currentProjects[org];
-    if (organization) {
-      let project = organization[projectId];
-      if (project) {
-        project = newConf;
-        return true;
-      } else {
-        throw new Error('Project not found');
-      }
-    } else {
-      throw new Error('Organization not found');
-    }
+  public saveProject(org: string, newConf: IProject | Project): Promise<boolean> {
+    let project = _.find(ProjectService.currentProjects[org], {id: newConf.id}) as Project;
+    return project
+        ? this.updateProject(org, newConf)
+        : this.createProject(org, new Project(newConf));
   }
 
-  public createProject(project: Project): Promise<boolean> {
+  public updateProject(org: string, newConf: IProject): Promise<boolean> {
+    const index = _.findIndex(ProjectService.currentProjects[org], {id: newConf.id});
+    ProjectService.currentProjects[org].splice(index, 1, newConf);
+
+    return new Promise((resolve: any, reject: any) => {
+      writeFileSync(
+        this.filePath,
+        JSON.stringify(ProjectService.currentProjects, null, 2),
+        'utf8'
+      );
+      resolve(true);
+    });
+  }
+
+  public createProject(org: string, project: Project): Promise<boolean> {
     return new Promise((resolve: any, reject: any) => {
       if (project.id === '' || project.name === '') {
         reject(new Error('Cannot create project with empty name'));
       }
 
-      // TODO: 'org' shall be configured
-      ProjectService.currentProjects['org'].push(project);
+      ProjectService.currentProjects[org].push(project);
 
       // TODO: check if project already exists on the filesystem
       if (existsSync(this.filePath)) {

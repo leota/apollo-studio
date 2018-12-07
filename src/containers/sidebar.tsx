@@ -4,8 +4,10 @@ import * as _ from 'lodash';
 import {withRouter} from 'react-router';
 
 import { Project } from '../models/project';
+import { Resolver } from '../services/resolverService';
 
 import TextBox from 'react-uwp/TextBox';
+import TreeView, { TreeItem } from 'react-uwp/TreeView';
 
 export interface SidebarProps {
   items: Project[];
@@ -28,12 +30,9 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
     const { items } = this.props;
 
     if (items) {
-      const itemsEls = _.map(
+      const trees = _.map(
         items,
-        (projects: Project[], org: string) => _.map(
-          projects,
-          (item: Project, i: number) => this.getItemElement(item, i)
-        )
+        (projects: Project[], org: string) => this.getProjectsTree(org, projects)
       );
 
       return (
@@ -41,7 +40,7 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
           <TextBox
             placeholder='Search...'
           />
-          {itemsEls}
+          {trees}
         </div>
       );
     } else {
@@ -53,10 +52,34 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
     }
   }
 
-  private getItemElement(item: Project, index: number): JSX.Element {
+  private getProjectsTree(index: string, projects: Project[]): JSX.Element {
+    const tree: TreeItem[] = [];
+
+    _.each(projects, (project: Project) => {
+      const branch: TreeItem = {};
+      branch.title = project.name;
+      branch.children = [];
+
+      _.each(project.resolvers, (resolver: Resolver) => {
+        if (branch.children) {
+          branch.children.push({
+            title: resolver.name
+          });
+        }
+      });
+
+      tree.push(branch);
+    });
+
     return (
       <div key={index}>
-        <span className='project-name' onClick={() => this.onProjectSelected(item) }>{item.name}</span>
+        <TreeView
+         style={{ width: '100%', padding: 0 }}
+          iconDirection='left'
+          itemHeight={36}
+          listSource={tree}
+          showFocus
+        />
       </div>
     );
   }

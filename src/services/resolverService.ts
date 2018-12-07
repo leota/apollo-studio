@@ -1,8 +1,7 @@
-import { Project } from '../models/project';
-
+import * as _ from 'lodash';
 import { readFileSync } from 'fs';
 import * as path from 'path';
-import * as readdirp from 'readdirp';
+import * as scandir from 'klaw-sync';
 
 import { getProjectPath } from '../utils/common';
 
@@ -25,6 +24,8 @@ export interface ResolverAtom {
 }
 
 export interface Resolver {
+  name: string;
+  filePath: string;
   isQuery: boolean;
   isMutation: boolean;
   isSubscription: boolean;
@@ -40,42 +41,40 @@ export class ResolverService {
     // do nothing
   }
 
-  public getResolversFromProject(projectId: string): Promise<Resolver[]> {
-    const output: Resolver[] = [];
+  public getResolversFromProject(projectId: string): Resolver[] {
     const resolversPath = path.join(getProjectPath(projectId), 'server', 'resolvers');
-
-    return new Promise((resolve: any, reject: any) => {
-      readdirp({ root: resolversPath, fileFilter: '*.ts' })
-        .on('data', (file: any) => {
-          if (file.name === 'index.ts') {
-            return;
-          }
-
-          let type: TypeResolver;
-          if (file.path.indexOf('queries') > -1) {
-            type = TypeResolver.Query;
-          } else if (file.path.indexOf('mutations') > -1) {
-            type = TypeResolver.Mutation;
-          } else if (file.path.indexOf('subscriptions') > -1) {
-            type = TypeResolver.Subscription;
-          } else if (file.path.indexOf('types') > -1) {
-            type = TypeResolver.Type;
-          } else {
-            return;
-          }
-
-          const classContent = readFileSync(file.fullPath, 'utf8');
-          output.push(
-            this.getResolverEntityFromClass(classContent, type)
-          );
-        })
-        .on('end', () => {
-          resolve(output);
-        });
+    const files = scandir(resolversPath, {
+        nodir: true
     });
+    const resolvers: Resolver[] = [];
+    _.each(files, (file: any) => {
+      if (file.path.indexOf('index.ts') > -1) {
+        return;
+      }
+
+      let type: TypeResolver;
+      if (file.path.indexOf('queries') > -1) {
+        type = TypeResolver.Query;
+      } else if (file.path.indexOf('mutations') > -1) {
+        type = TypeResolver.Mutation;
+      } else if (file.path.indexOf('subscriptions') > -1) {
+        type = TypeResolver.Subscription;
+      } else if (file.path.indexOf('types') > -1) {
+        type = TypeResolver.Type;
+      } else {
+        return;
+      }
+
+      const classContent = readFileSync(file.path, 'utf8');
+      resolvers.push(
+        this.getResolverEntityFromClass(file.path, classContent, type)
+      );
+    });
+
+    return resolvers;
   }
 
-  private getResolverEntityFromClass(classContent: string, type: TypeResolver): Resolver {
+  private getResolverEntityFromClass(filePath: string, classContent: string, type: TypeResolver): Resolver {
     // Remove comments
     // const commentsRe = new RegExp([
     //   /\/(\*)[^*]*\*+(?:[^*\/][^*]*\*+)*\//.source,           // $1: multi-line comment
@@ -110,6 +109,8 @@ export class ResolverService {
     // }
 
     return {
+      name: path.parse(filePath).base.replace('.ts', ''),
+      filePath,
       isQuery: type === TypeResolver.Query,
       isMutation: type === TypeResolver.Mutation,
       isSubscription: type === TypeResolver.Subscription,

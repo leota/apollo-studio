@@ -1,12 +1,14 @@
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
-import Toast from 'react-uwp/Toast';
 import update from 'immutability-helper';
 
 import { Project } from '../models/project';
 
 import ServiceProperties from '../components/serviceProperties';
 import { ProjectService } from '../services';
+
+import Toast from 'react-uwp/Toast';
+import { executeNpmScript } from '../utils/common';
 
 export interface IEditProps {
   onSuccess?: () => void;
@@ -35,14 +37,18 @@ export default class Edit extends React.PureComponent<IEditProps, EditState> {
 
   private projectService: ProjectService = new ProjectService();
 
-  constructor(props: IEditProps) {
-    super(props);
+  constructor(props: IEditProps, context?: any) {
+    super(props, context);
     this.state = {
       showSuccess: false,
       showError: false,
     };
     this.onSave = this.onSave.bind(this);
     this.onError = this.onError.bind(this);
+  }
+
+  public componentWillUnmount(): void {
+    // do nothing
   }
 
   public componentDidMount(): void {
@@ -84,11 +90,17 @@ export default class Edit extends React.PureComponent<IEditProps, EditState> {
           <h5 style={subHeader}>
             Edit {this.state.project.name}
           </h5>
-          <ServiceProperties
-            service={this.state.project}
-            onSave={this.onSave}
-            onError={this.onError}
-          />
+
+          <div className='panels'>
+            <div>
+              <ServiceProperties
+                service={this.state.project}
+                onSave={this.onSave}
+                onError={this.onError}
+              />
+            </div>
+          </div>
+
           <Toast
             defaultShow={this.state.showSuccess}
             onToggleShowToast={showSuccess => this.setState({ showSuccess })}
