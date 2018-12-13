@@ -1,15 +1,16 @@
 import * as _ from 'lodash';
-import { readFileSync } from 'fs';
+import * as ts from 'typescript';
+import { readFileSync, writeFileSync } from 'fs';
 import * as path from 'path';
 import * as scandir from 'klaw-sync';
 
 import { getProjectPath } from '../utils/common';
 
-enum TypeResolver {
-  Query = 0,
-  Mutation = 1,
-  Subscription = 2,
-  Type = 3,
+export enum TypeResolver {
+  Query = 'Query',
+  Mutation = 'Mutation',
+  Subscription = 'Subscription',
+  Type = 'Type',
 }
 
 export interface Import {
@@ -39,6 +40,26 @@ export interface Resolver {
 export class ResolverService {
   constructor() {
     // do nothing
+  }
+
+  public desumeResolverNameFromContent(classContent: string): string[] {
+    const output: string[] = [];
+    const resolverRe = /^(.*)\: function \((.*)\) {$/igm;
+    const result = ts.transpileModule(classContent, {
+      compilerOptions: {
+        strict: true,
+        module: ts.ModuleKind.CommonJS
+      }
+    });
+    const compiled = result.outputText;
+    let m;
+    while ((m = resolverRe.exec(compiled)) !== null) {
+      if (m.index === resolverRe.lastIndex) {
+        resolverRe.lastIndex++;
+      }
+      output.push(m[1].replace(/\s/g, ''));
+    }
+    return output;
   }
 
   public getResolversFromProject(projectId: string): Resolver[] {
@@ -74,7 +95,120 @@ export class ResolverService {
     return resolvers;
   }
 
-  private getResolverEntityFromClass(filePath: string, classContent: string, type: TypeResolver): Resolver {
+  public createResolver(
+    projectId: string,
+    name: string,
+    classContent: string,
+    type: TypeResolver
+  ): void {
+    console.log('Create resolver');
+    // creates file with classContent, uses name for file name, type for the folder
+    // registers the export in the barrel file, uses name as reference
+    let typeFolder = '';
+    switch (type) {
+      case TypeResolver.Query:
+        typeFolder = 'queries';
+        break;
+      case TypeResolver.Mutation:
+        typeFolder = 'mutations';
+        break;
+      case TypeResolver.Subscription:
+        typeFolder = 'subscriptions';
+        break;
+      case TypeResolver.Type:
+        typeFolder = 'types';
+        break;
+    }
+
+    const destFilePath = path.join(
+      getProjectPath(projectId),
+      'server',
+      'resolvers',
+      typeFolder,
+      `${name.toLowerCase().replace(/[^A-Za-z0-9\-\_]/, '-')}.ts`
+    );
+
+    // Writing the file
+    // TODO: Check if it's already existing
+    writeFileSync(
+      destFilePath,
+      classContent,
+      'utf8'
+    );
+
+    // Register class in the solution
+    this.registerResolver(
+      projectId,
+      name,
+      type
+    );
+  }
+
+  public updateResolver(
+    projectId: string,
+    resolver: Resolver
+    classContent: string
+  ): Resolver {
+    const filePath = resolver.filePath;
+    return resolver;
+  }
+
+  private registerResolver(
+    projectId: string,
+    name: string,
+    type: TypeResolver,
+  ): void {
+    let typeFolder = '';
+    switch (type) {
+      case TypeResolver.Query:
+        typeFolder = 'queries';
+        break;
+      case TypeResolver.Mutation:
+        typeFolder = 'mutations';
+        break;
+      case TypeResolver.Subscription:
+        typeFolder = 'subscriptions';
+        break;
+      case TypeResolver.Type:
+        typeFolder = 'types';
+        break;
+    }
+
+    const indexFilePath = path.join(
+      getProjectPath(projectId),
+      'server',
+      'resolvers',
+      typeFolder,
+      'index.ts'
+    );
+    let indexFileContent = readFileSync(
+      indexFilePath,
+      'utf8'
+    );
+
+    // Prepend the import
+    indexFileContent =
+    `import ${name} from './${name}';\n` +
+    `${indexFileContent}`;
+    // Add the export
+    indexFileContent = indexFileContent.replace(
+      'export default {',
+      `export default {\n` +
+      `  ${name},`
+    );
+
+    writeFileSync(
+      indexFilePath,
+      indexFileContent,
+      'utf8'
+    );
+  }
+
+  private getResolverEntityFromClass(
+    filePath: string,
+    classContent: string,
+    type: TypeResolver
+  ): Resolver {
     // Remove comments
     // const commentsRe = new RegExp([
     //   /\/(\*)[^*]*\*+(?:[^*\/][^*]*\*+)*\//.source,           // $1: multi-line comment
@@ -121,7 +255,9 @@ export class ResolverService {
 
   // TODO: Experimental
   // imports: this.getImportsEntitiesFromClass(classContent),
+  /*
   private getImportsEntitiesFromClass(classContent: string): Import[] {
     return [] as Import[];
   }
+  */
 }

@@ -27,6 +27,19 @@ html, body, #App, .content {
   right: 0;
 }
 
+.register-resolver.screen {
+  padding: 0;
+}
+
+.resolver-props-selectors {
+  display: inline-block;
+}
+
+#resolver-editor {
+  padding-top: 25px !important;
+  height: calc(100% - 40px) !important;
+}
+
 div[class^='toast-wrapper'] {
   font-size: 14px;
   font-family: Segoe UI, Microsoft YaHei, Open Sans, sans-serif, Hiragino Sans GB, Arial, Lantinghei SC, STHeiti, WenQuanYi Micro Hei, SimSun;

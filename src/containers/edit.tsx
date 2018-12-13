@@ -8,7 +8,6 @@ import ServiceProperties from '../components/serviceProperties';
 import { ProjectService } from '../services';
 
 import Toast from 'react-uwp/Toast';
-import { executeNpmScript } from '../utils/common';
 
 export interface IEditProps {
   onSuccess?: () => void;
@@ -45,10 +44,6 @@ export default class Edit extends React.PureComponent<IEditProps, EditState> {
     };
     this.onSave = this.onSave.bind(this);
     this.onError = this.onError.bind(this);
-  }
-
-  public componentWillUnmount(): void {
-    // do nothing
   }
 
   public componentDidMount(): void {

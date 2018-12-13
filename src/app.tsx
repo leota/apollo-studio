@@ -43,39 +43,49 @@ export class App extends React.Component<AppProps, AppState> {
   public render() {
     return (
       <Router>
-      <UWPThemeProvider
-        theme={getTheme({
-          themeName: this.state.configurations.theme.name.value,
-          accent: this.state.configurations.theme.accentColor.value,
-          useFluentDesign: true,
-        })}
-      >
-        <div className='sidebar'>
-          <Sidebar items={this.state.projects} />
-        </div>
-        <div className='content'>
+        <UWPThemeProvider
+          theme={getTheme({
+            themeName: this.state.configurations.theme.name.value,
+            accent: this.state.configurations.theme.accentColor.value,
+            useFluentDesign: true,
+          })}
+        >
+          <div className='sidebar'>
+            <Sidebar items={this.state.projects} />
+          </div>
+          <div className='content'>
             <Switch>
-              <Route path='/' exact component={(props: any) => <Welcome {...props} />} />
-              <Route path='/create' exact component={(props: any) => <Create {...props} onSuccess={this.refresh} />} />
-              <Route path='/edit/:id' exact component={(props: any) => <Edit {...props} onSuccess={this.refresh} />} />
-              <Route path='/run' exact component={(props: any) => <Run {...props} />} />
-              <Route path='/new/resolver' exact component={(props: any) => <RegisterResolver {...props} />} />
+              <Route path='/' exact component={(props: any) =>
+                <Welcome {...props} />} />
+
+              <Route path='/create' exact component={(props: any) =>
+                <Create {...props} onSuccess={this.refresh} />} />
+
+              <Route path='/edit/:id' exact component={(props: any) =>
+                <Edit {...props} onSuccess={this.refresh} />} />
+
+              <Route path='/resolvers/:projectId/new' exact component={(props: any) =>
+                <RegisterResolver {...props} onSuccess={this.refresh} />} />
+
+              <Route path='/resolvers/:projectId/:hash' exact component={(props: any) =>
+                <RegisterResolver {...props} onSuccess={this.refresh} items={this.state.projects} />} />
+
+              <Route path='/run' exact component={(props: any) =>
+                <Run {...props} />} />
             </Switch>
-        </div>
-      </UWPThemeProvider>
+          </div>
+        </UWPThemeProvider>
       </Router>
     );
   }
 
   private refresh(): void {
-    console.log('Refreshing main app');
-    /*
     this.setState(update(
       this.state,
       {
         projects: {$set: this.projectService.getProjects()}
       }
     ));
-    */
+
   }
 }
