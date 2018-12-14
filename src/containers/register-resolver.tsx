@@ -77,6 +77,7 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
     };
 
     this.saveResolver = this.saveResolver.bind(this);
+    this.deleteResolver = this.deleteResolver.bind(this);
     this.onCodeChange = this.onCodeChange.bind(this);
   }
 
@@ -155,7 +156,15 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
           />
         </div>
       )
-      : '';
+      : (
+        <Button
+            style={defaultBtnStyle}
+            icon='Delete'
+            onClick={this.deleteResolver}
+          >
+            Delete
+          </Button>
+      );
 
     const confirmDialogProps: ContentDialogProps = {
       title: 'Do you confirm the changes?',
@@ -212,6 +221,7 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
 
   private onCodeChange(value: string): void {
     this.currentCode = value;
+
     if (this.state.isNew) {
       this.setState(update(
         this.state,
@@ -267,6 +277,30 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
     }
   }
 
+  private deleteResolver(): void {
+    if (!this.state.project || !RegisterResolver.resolver) {
+      throw new Error('Unexpected error while deleting the current resolver.');
+    }
+
+    if (this.state.isNew) {
+      throw new Error('Nothing to be deleted.');
+    } else {
+      // TODO: Ask confirm
+
+      RegisterResolver.resolverService
+        .deleteResolver(
+          RegisterResolver.resolver,
+          this.state.project.id,
+        );
+
+      // All the operations above are sync,
+      // it's safe to call the callback right away
+      if (this.props.onSuccess) {
+        this.props.onSuccess();
+      }
+    }
+  }
+
   private commitChanges(
     classContent: string,
     name?: string,
@@ -288,8 +322,13 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
         throw new Error('Resolver not available.');
       }
 
+      if (!this.currentCode) {
+        // TODO: Alert not throw
+        throw new Error('Nothing to commit.');
+      }
+
       RegisterResolver.resolverService
-        .updateResolver(this.state.project.id, RegisterResolver.resolver, classContent);
+        .updateResolver(RegisterResolver.resolver, classContent);
     }
   }
 }

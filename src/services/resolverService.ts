@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 import * as ts from 'typescript';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, unlinkSync } from 'fs';
 import * as path from 'path';
 import * as scandir from 'klaw-sync';
 
@@ -101,7 +101,6 @@ export class ResolverService {
     classContent: string,
     type: TypeResolver
   ): void {
-    console.log('Create resolver');
     // creates file with classContent, uses name for file name, type for the folder
     // registers the export in the barrel file, uses name as reference
     let typeFolder = '';
@@ -128,6 +127,18 @@ export class ResolverService {
       `${name.toLowerCase().replace(/[^A-Za-z0-9\-\_]/, '-')}.ts`
     );
 
+    // Removing empty entities
+    classContent = classContent
+      .replace('query: {},', '')
+      .replace('mutation: {},', '')
+      .replace('subscription: {},', '')
+      .replace('type: {},', '')
+      .replace('query: ``,', '')
+      .replace('mutation: ``,', '')
+      .replace('subscription: ``,', '')
+      .replace('common: ``,', '')
+    ;
+
     // Writing the file
     // TODO: Check if it's already existing
     writeFileSync(
@@ -145,12 +156,40 @@ export class ResolverService {
   }
 
   public updateResolver(
-    projectId: string,
-    resolver: Resolver
+    resolver: Resolver,
     classContent: string
-  ): Resolver {
-    const filePath = resolver.filePath;
-    return resolver;
+  ): void {
+    writeFileSync(
+      resolver.filePath,
+      classContent,
+      'utf8'
+    );
+  }
+
+  public deleteResolver(
+    resolver: Resolver,
+    projectId: string,
+  ): void {
+    let type: TypeResolver;
+    if (resolver.isQuery) {
+      type = TypeResolver.Query;
+    } else if (resolver.isMutation) {
+      type = TypeResolver.Mutation;
+    } else if (resolver.isSubscription) {
+      type = TypeResolver.Subscription;
+    } else {
+      type = TypeResolver.Type;
+    };
+
+    // Delete the file
+    unlinkSync(resolver.filePath);
+
+    // Unregister the resolver
+    this.unregisterResolver(
+      projectId,
+      resolver.name,
+      type
+    );
   }
 
   private registerResolver(
@@ -202,6 +241,49 @@ export class ResolverService {
       indexFileContent,
       'utf8'
     );
+  }
+
+  private unregisterResolver(
+    projectId: string,
+    name: string,
+    type: TypeResolver,
+  ): void {
+    let typeFolder = '';
+    switch (type) {
+      case TypeResolver.Query:
+        typeFolder = 'queries';
+        break;
+      case TypeResolver.Mutation:
+        typeFolder = 'mutations';
+        break;
+      case TypeResolver.Subscription:
+        typeFolder = 'subscriptions';
+        break;
+      case TypeResolver.Type:
+        typeFolder = 'types';
+        break;
+    }
+
+    const indexFilePath = path.join(
+      getProjectPath(projectId),
+      'server',
+      'resolvers',
+      typeFolder,
+      'index.ts'
+    );
+    let indexFileContent = readFileSync(
+      indexFilePath,
+      'utf8'
+    );
+    indexFileContent = indexFileContent
+      .replace(`import ${name} from './${name}';\n`, '')
+      .replace(`  ${name},`, '');
+ 
+    writeFileSync(
+        indexFilePath,
+        indexFileContent,
+        'utf8'
+      );
   }
 
   private getResolverEntityFromClass(

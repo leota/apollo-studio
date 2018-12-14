@@ -39,6 +39,7 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
     props: SidebarProps,
     state: SidebarState
   ): SidebarState {
+    // TODO: Improve this part
     const matchA = matchPath(props.location.pathname, {
       path: '/edit/:id',
       exact: true,
@@ -104,6 +105,10 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
   private getProjectsTree(index: string, projects: Project[]): JSX.Element {
     const tree: TreeItem[] = [];
 
+    tree.push({
+      title: `${addSign} Add new project`
+    });
+
     _.each(projects, (project: Project) => {
       const branch: TreeItem = {};
       branch.title = project.name;
@@ -146,11 +151,20 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
     // to find this dirty hacky solution in order to understand
     // the kind of item who have been selected.
     if (item.title && item.title.indexOf(addSign) === 0) {
-      // It's the add action
-      if (!this.selectedProject) {
-        throw new Error('Trying to select a resolver outside a project selection.');
+      // It's the adding action
+
+      // TODO: Find a better solution for match the
+      // adding actions.
+      if (item.title.indexOf('project') > 0) {
+        // Add a new project
+        this.onNewProject();
+      } else {
+        // Add a new resolver
+        if (!this.selectedProject) {
+          throw new Error('Trying to select a resolver outside a project selection.');
+        }
+        this.onNewResolver(this.selectedProject.id);
       }
-      this.onNewResolver(this.selectedProject.id);
     } else if (item.children && item.children.length > 0) {
       // It's a project
       let project;
@@ -197,8 +211,14 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
   }
 
   private onNewResolver(projectId: string): void {
-    if (!this.props.history.location.pathname.match(new RegExp(`\/resolvers\/${projectId}$`, 'ig'))) {
+    if (!this.props.history.location.pathname.match(new RegExp(`\/resolvers\/${projectId}\/new$`, 'ig'))) {
       this.props.history.push(`/resolvers/${projectId}/new`);
+    }
+  }
+
+  private onNewProject(): void {
+    if (!this.props.history.location.pathname.match(new RegExp(`\/create$`, 'ig'))) {
+      this.props.history.push(`/create`);
     }
   }
 }
