@@ -8,6 +8,7 @@ import ServiceProperties from '../components/serviceProperties';
 import { ProjectService } from '../services';
 
 import Toast from 'react-uwp/Toast';
+import Button from 'react-uwp/Button';
 
 export interface IEditProps {
   onSuccess?: () => void;
@@ -34,7 +35,7 @@ export default class Edit extends React.PureComponent<IEditProps, EditState> {
   private errorToastTitle = 'Ooops...';
   private errorToastLines = ['Something wrong happened', 'Check the preferencies or retry later :-('];
 
-  private projectService: ProjectService = new ProjectService();
+  private static projectService: ProjectService = new ProjectService();
 
   constructor(props: IEditProps, context?: any) {
     super(props, context);
@@ -43,29 +44,22 @@ export default class Edit extends React.PureComponent<IEditProps, EditState> {
       showError: false,
     };
     this.onSave = this.onSave.bind(this);
+    this.onDelete = this.onDelete.bind(this);
     this.onError = this.onError.bind(this);
   }
 
-  public componentDidMount(): void {
-    this.setState(update(
-      this.state,
-      {
-        project: { $set: this.projectService.getProject(this.props.match.params.id) }
-      }
-    ));
-  }
-
-  public componentDidUpdate(newProps: IEditProps): void {
-    if (this.props.match.params.id === newProps.match.params.id) {
-      return;
+  static getDerivedStateFromProps(
+    props: IEditProps,
+    state: EditState
+  ): EditState {
+    if (state.project && props.match.params.id === state.project.id) {
+      console.log('Project already loaded');
+      return state;
     }
 
-    this.setState(update(
-      this.state,
-      {
-        project: { $set: this.projectService.getProject(this.props.match.params.id) }
-      }
-    ));
+    return {
+      project: Edit.projectService.getProject(props.match.params.id)
+    };
   }
 
   public render() {
@@ -84,6 +78,12 @@ export default class Edit extends React.PureComponent<IEditProps, EditState> {
         <div className='create screen'>
           <h5 style={subHeader}>
             Edit {this.state.project.name}
+            <Button
+              icon='Delete'
+              onClick={() => { this.onDelete(); }}
+            >
+              Delete
+            </Button>
           </h5>
 
           <div className='panels'>
@@ -118,6 +118,20 @@ export default class Edit extends React.PureComponent<IEditProps, EditState> {
   }
 
   private onSave(): void {
+    this.setState({ showSuccess: true }, () => {
+      if (this.props.onSuccess) {
+        this.props.onSuccess();
+      }
+    });
+  }
+
+  private onDelete(): void {
+    if (!this.state.project) {
+      throw new Error('There is no project to delete.');
+    }
+
+    Edit.projectService.deleteProject('org', this.state.project);
+
     this.setState({ showSuccess: true }, () => {
       if (this.props.onSuccess) {
         this.props.onSuccess();

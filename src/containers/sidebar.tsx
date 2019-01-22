@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as _ from 'lodash';
+import update from 'immutability-helper';
 
 import { matchPath, withRouter } from 'react-router';
 
@@ -74,7 +75,6 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
       return state;
     }
   }
-
 
   public render() {
     const { items } = this.props;
@@ -152,7 +152,6 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
     // the kind of item who have been selected.
     if (item.title && item.title.indexOf(addSign) === 0) {
       // It's the adding action
-
       // TODO: Find a better solution for match the
       // adding actions.
       if (item.title.indexOf('project') > 0) {
@@ -167,9 +166,9 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
       }
     } else if (item.children && item.children.length > 0) {
       // It's a project
-      let project;
+      let project: Project | undefined;
       _.each(this.props.items, (org: any): any => {
-        project = _.find(org, {name: item.title});
+        project = _.find(org, {name: item.title}) as Project;
         if (project) {
           return true;
         }
@@ -178,9 +177,8 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
       if (!project) {
         throw new Error('Trying to select a project that does not exist.');
       }
-      this.selectedProject = project;
-      this.selectedResolver = undefined;
-      this.onProjectSelected(this.selectedProject);
+
+      this.onProjectSelected(project);
     } else {
       // It's a resolver
       if (!this.selectedProject) {
@@ -192,18 +190,27 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
         throw new Error('Trying to select a resolver that does not exist.');
       }
 
-      this.selectedResolver = resolver;
-      this.onResolverSelected(this.selectedProject.id, this.selectedResolver);
+      this.onResolverSelected(this.selectedProject.id, resolver);
     }
   }
 
   private onProjectSelected(project: Project): void {
+    this.selectedProject = project;
+    this.selectedResolver = undefined;
+    this.setState(update(
+      this.state,
+      {
+        selectedProjectId: {$set: project.id}
+      }
+    ));
+
     if (!this.props.history.location.pathname.match(new RegExp(`\/${project.id}$`, 'ig'))) {
       this.props.history.push(`/edit/${project.id}`);
     }
   }
 
   private onResolverSelected(projectId: string, resolver: Resolver): void {
+    this.selectedResolver = resolver;
     const resolverHash = btoa(resolver.name);
     if (!this.props.history.location.pathname.match(new RegExp(`\/${resolverHash}$`, 'ig'))) {
       this.props.history.push(`/resolvers/${projectId}/${resolverHash}`);

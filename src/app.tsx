@@ -86,6 +86,5 @@ export class App extends React.Component<AppProps, AppState> {
         projects: {$set: this.projectService.getProjects()}
       }
     ));
-
   }
 }

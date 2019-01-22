@@ -293,6 +293,8 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
           this.state.project.id,
         );
 
+      this.props.history.push(`/edit/${this.state.project.id}`);
+
       // All the operations above are sync,
       // it's safe to call the callback right away
       if (this.props.onSuccess) {

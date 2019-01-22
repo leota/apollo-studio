@@ -1,7 +1,8 @@
 import * as _ from 'lodash';
-import { writeFileSync, readFileSync, existsSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync, unlinkSync } from 'fs';
 import * as localProjects from '../../confs/projects.json';
 
+import * as rimraf from 'rimraf';
 import * as GitDownload from 'download-git-repo';
 
 import { Project, IProject } from '../models/project';
@@ -93,6 +94,20 @@ export class ProjectService {
       } else {
         reject(new Error('Cannot find projects file'));
       }
+    });
+  }
+
+  public deleteProject(org: string, project: Project): Promise<boolean> {
+    return new Promise((resolve: any, reject: any) => {
+      const projectPath = getProjectPath(project);
+      _.remove(ProjectService.currentProjects[org], {id: project.id});
+      rimraf.sync(projectPath);
+      writeFileSync(
+        this.filePath,
+        JSON.stringify(ProjectService.currentProjects, null, 2),
+        'utf8'
+      );
+      resolve(true);
     });
   }
 }

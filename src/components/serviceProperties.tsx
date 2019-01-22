@@ -29,6 +29,17 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
     };
   }
 
+  static getDerivedStateFromProps(
+    props: ServicePropertiesProps,
+    state: ServicePropertiesState
+  ): ServicePropertiesState {
+    return {
+      service: props.service
+        ? props.service
+        : state.service
+    };
+  }
+
   public render() {
     const onNameChange = (value: any) => {
       /* do nothing */
@@ -38,86 +49,86 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
       <div className='service-properties'>
         {this.textProperty(
           'Service name',
-          (this.props.service
-            ? this.props.service.name
+          (this.state.service
+            ? this.state.service.name
             : initialProject.name),
           'name',
           onNameChange
         )}
         {this.textProperty(
           'Target domain',
-          (this.props.service
-            ? this.props.service.targetDomain
+          (this.state.service
+            ? this.state.service.targetDomain
             : initialProject.targetDomain),
           'targetDomain'
         )}
         {this.textProperty(
           'Default port',
-          (this.props.service
-            ? this.props.service.defaults.port
+          (this.state.service
+            ? this.state.service.defaults.port
             : initialProject.defaults.port),
           'defaults.port'
         )}
         {this.textProperty(
           'Default addr',
-          (this.props.service
-            ? this.props.service.defaults.addr
+          (this.state.service
+            ? this.state.service.defaults.addr
             : initialProject.defaults.addr),
           'defaults.addr'
         )}
         {this.textProperty(
           'GraphQL endpoint',
-          (this.props.service
-            ? this.props.service.graphql.path
+          (this.state.service
+            ? this.state.service.graphql.path
             : initialProject.graphql.path),
           'graphql.path'
         )}
         {this.textProperty(
           'REST endpoint',
-          (this.props.service
-            ? this.props.service.rest.path
+          (this.state.service
+            ? this.state.service.rest.path
             : initialProject.rest.path),
           'rest.path'
         )}
         {this.textProperty(
           'Views engine',
-          (this.props.service
-            ? this.props.service.views.engine
+          (this.state.service
+            ? this.state.service.views.engine
             : initialProject.views.engine),
           'views.engine'
         )}
         {this.textProperty(
           'Views source folder',
-          (this.props.service
-            ? this.props.service.views.src
+          (this.state.service
+            ? this.state.service.views.src
             : initialProject.views.src),
           'views.src'
         )}
         {this.multipleSelectionProperty(
           'Accepted domains',
-          (this.props.service
-            ? this.props.service.cors.acceptedDomains
+          (this.state.service
+            ? this.state.service.cors.acceptedDomains
             : initialProject.cors.acceptedDomains),
           'cors.acceptedDomains'
         )}
         {this.multipleSelectionProperty(
           'Accepted methods',
-          (this.props.service
-            ? this.props.service.cors.methods
+          (this.state.service
+            ? this.state.service.cors.methods
             : initialProject.cors.methods),
           'cors.methods'
         )}
         {this.booleanProperty(
           'Pre-flight continue',
-          (this.props.service
-            ? this.props.service.cors.preflightContinue
+          (this.state.service
+            ? this.state.service.cors.preflightContinue
             : initialProject.cors.preflightContinue),
           'cors.preflightContinue'
         )}
         {this.textProperty(
           'OPTIONs success status',
-          (this.props.service
-            ? this.props.service.cors.optionsSuccessStatus
+          (this.state.service
+            ? this.state.service.cors.optionsSuccessStatus
             : initialProject.cors.optionsSuccessStatus),
           'cors.optionsSuccessStatus'
         )}
@@ -153,15 +164,6 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
     }
   }
 
-  private slugify(text: string): string {
-    return text.toString().toLowerCase()
-      .replace(/\s+/g, '-')           // Replace spaces with -
-      .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-      .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-      .replace(/^-+/, '')             // Trim - from start of text
-      .replace(/-+$/, '');            // Trim - from end of text
-  }
-
   private textProperty(
     key: string,
     value: any,
@@ -173,7 +175,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
     }
 
     return (
-      <div className='service-property'>
+      <div key={Math.random()} className='service-property'>
         <span className='label'>{key}</span>
         <span className='value'>
           <TextBox
@@ -211,7 +213,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
     onChange?: (value: any) => void,
   ): JSX.Element {
     return (
-      <div className='service-property'>
+      <div key={Math.random()} className='service-property'>
         <span className='label'>{key}</span>
         <span className='value'>
           {values.map((value: string, index: number): JSX.Element =>
@@ -269,7 +271,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
     onChange?: (value: any) => void,
   ): JSX.Element {
     return (
-      <div className='service-property'>
+      <div key={Math.random()} className='service-property'>
         <span className='label'>{key}</span>
         <span className='value'>
           <CheckBox
