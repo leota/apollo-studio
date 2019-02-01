@@ -21,8 +21,13 @@ export interface Cors {
   optionsSuccessStatus: number;
 }
 export interface Remotes {
-  [remoteName: string]: string;
+  [remoteName: string]: string | RemoteConfiguration | any;
 }
+
+export interface RemoteConfiguration {
+  default: string;
+}
+
 export interface IProject {
   id: string;
   name: string;
