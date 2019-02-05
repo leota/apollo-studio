@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import { writeFileSync, readFileSync, existsSync, unlinkSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync } from 'fs';
 import * as localProjects from '../../confs/projects.json';
 
 import * as rimraf from 'rimraf';
@@ -23,6 +23,7 @@ export class ProjectService {
     const orgs = JSON.parse(
       readFileSync('confs/projects.json', 'utf8')
     );
+
     // Mapping JSON to Classes
     const out: any = {};
     _.each(orgs, (org: any) => out[org] = _.map(org, (project: Project) => new Project(project)));
@@ -41,6 +42,10 @@ export class ProjectService {
   }
 
   public saveProject(org: string, newConf: IProject | Project): Promise<boolean> {
+    if (newConf.id === '') {
+      newConf.id = btoa(String(Math.random() + new Date().getTime()));
+    }
+
     let project = _.find(ProjectService.currentProjects[org], {id: newConf.id}) as Project;
     return project
         ? this.updateProject(org, newConf)
@@ -69,7 +74,6 @@ export class ProjectService {
 
       ProjectService.currentProjects[org].push(project);
 
-      // TODO: check if project already exists on the filesystem
       if (existsSync(this.filePath)) {
         GitDownload(
           'marcellobarile/typescript-express-graphql-seed#develop-apollo-2',

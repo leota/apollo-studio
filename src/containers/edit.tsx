@@ -1,48 +1,35 @@
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
-import update from 'immutability-helper';
 
 import { Project } from '../models/project';
 
 import ServiceProperties from '../components/serviceProperties';
 import { ProjectService } from '../services';
 
-import Toast from 'react-uwp/Toast';
 import Button from 'react-uwp/Button';
 
 export interface IEditProps {
-  onSuccess?: () => void;
   match: any;
   location: any;
   history: any;
+  onLoading?: (state: boolean) => void;
+  onSuccess?: () => void;
+  onError?: (err?: Error) => void;
 }
 
 interface EditState {
   project?: Project;
-  showSuccess?: boolean;
-  showError?: boolean;
 }
 
 export default class Edit extends React.PureComponent<IEditProps, EditState> {
   static contextTypes = { theme: PropTypes.object };
   public context: { theme: ReactUWP.ThemeType };
 
-  private successToastDelay = 5500;
-  private successToastTitle = 'All done';
-  private successToastLines = ['A new service is ready to be run', 'Enjoy!'];
-
-  private errorToastDelay = 5500;
-  private errorToastTitle = 'Ooops...';
-  private errorToastLines = ['Something wrong happened', 'Check the preferencies or retry later :-('];
-
   private static projectService: ProjectService = new ProjectService();
 
   constructor(props: IEditProps, context?: any) {
     super(props, context);
-    this.state = {
-      showSuccess: false,
-      showError: false,
-    };
+    this.state = { };
     this.onSave = this.onSave.bind(this);
     this.onDelete = this.onDelete.bind(this);
     this.onError = this.onError.bind(this);
@@ -90,39 +77,21 @@ export default class Edit extends React.PureComponent<IEditProps, EditState> {
             <div>
               <ServiceProperties
                 service={this.state.project}
+                onLoading={this.props.onLoading}
                 onSave={this.onSave}
                 onError={this.onError}
               />
             </div>
           </div>
-
-          <Toast
-            defaultShow={this.state.showSuccess}
-            onToggleShowToast={showSuccess => this.setState({ showSuccess })}
-            title={this.successToastTitle}
-            description={this.successToastLines}
-            closeDelay={this.successToastDelay}
-            showCloseIcon
-          />
-          <Toast
-            defaultShow={this.state.showError}
-            onToggleShowToast={showError => this.setState({ showError })}
-            title={this.errorToastTitle}
-            description={this.errorToastLines}
-            closeDelay={this.errorToastDelay}
-            showCloseIcon
-          />
         </div>
       );
     }
   }
 
   private onSave(): void {
-    this.setState({ showSuccess: true }, () => {
-      if (this.props.onSuccess) {
-        this.props.onSuccess();
-      }
-    });
+    if (this.props.onSuccess) {
+      this.props.onSuccess();
+    }
   }
 
   private onDelete(): void {
@@ -132,14 +101,14 @@ export default class Edit extends React.PureComponent<IEditProps, EditState> {
 
     Edit.projectService.deleteProject('org', this.state.project);
 
-    this.setState({ showSuccess: true }, () => {
-      if (this.props.onSuccess) {
-        this.props.onSuccess();
-      }
-    });
+    if (this.props.onSuccess) {
+      this.props.onSuccess();
+    }
   }
 
-  private onError(): void {
-    this.setState({ showError: true });
+  private onError(err?: Error): void {
+    if (this.props.onError) {
+      this.props.onError(err);
+    }
   }
 }

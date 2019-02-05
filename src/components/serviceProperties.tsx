@@ -1,43 +1,38 @@
 import * as React from 'react';
 import * as _ from 'lodash';
-import update from 'immutability-helper';
 
 import { ProjectService } from '../services';
-import { Project, initialProject, IProject } from '../models/project';
+import { initialProject, IProject } from '../models/project';
 
 import TextBox from 'react-uwp/TextBox';
 import CheckBox from 'react-uwp/CheckBox';
 import Button from 'react-uwp/Button';
 
 interface ServicePropertiesProps {
+  onLoading?: (state: boolean) => void;
   onSave?: () => void;
-  onError?: () => void;
+  onError?: (err?: Error) => void;
   service?: IProject;
 }
 
-interface ServicePropertiesState {
-  service: IProject;
-}
+interface ServicePropertiesState { }
 
 class ServiceProperties extends React.PureComponent<ServicePropertiesProps, ServicePropertiesState> {
+  public static service: IProject;
+
   private projectService: ProjectService = new ProjectService();
 
   constructor(props: ServicePropertiesProps) {
     super(props);
-    this.state = {
-      service: props.service || initialProject,
-    };
+    this.state = { };
   }
 
   static getDerivedStateFromProps(
     props: ServicePropertiesProps,
     state: ServicePropertiesState
   ): ServicePropertiesState {
-    return {
-      service: props.service
-        ? props.service
-        : state.service
-    };
+    ServiceProperties.service = props.service || _.cloneDeep(initialProject);
+    return state;
   }
 
   public render() {
@@ -49,87 +44,63 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
       <div className='service-properties'>
         {this.textProperty(
           'Service name',
-          (this.state.service
-            ? this.state.service.name
-            : initialProject.name),
+          ServiceProperties.service.name,
           'name',
           onNameChange
         )}
         {this.textProperty(
           'Target domain',
-          (this.state.service
-            ? this.state.service.targetDomain
-            : initialProject.targetDomain),
+          ServiceProperties.service.targetDomain,
           'targetDomain'
         )}
         {this.textProperty(
           'Default port',
-          (this.state.service
-            ? this.state.service.defaults.port
-            : initialProject.defaults.port),
+          ServiceProperties.service.defaults.port,
           'defaults.port'
         )}
         {this.textProperty(
           'Default addr',
-          (this.state.service
-            ? this.state.service.defaults.addr
-            : initialProject.defaults.addr),
+          ServiceProperties.service.defaults.addr,
           'defaults.addr'
         )}
         {this.textProperty(
           'GraphQL endpoint',
-          (this.state.service
-            ? this.state.service.graphql.path
-            : initialProject.graphql.path),
+          ServiceProperties.service.graphql.path,
           'graphql.path'
         )}
         {this.textProperty(
           'REST endpoint',
-          (this.state.service
-            ? this.state.service.rest.path
-            : initialProject.rest.path),
+          ServiceProperties.service.rest.path,
           'rest.path'
         )}
         {this.textProperty(
           'Views engine',
-          (this.state.service
-            ? this.state.service.views.engine
-            : initialProject.views.engine),
+          ServiceProperties.service.views.engine,
           'views.engine'
         )}
         {this.textProperty(
           'Views source folder',
-          (this.state.service
-            ? this.state.service.views.src
-            : initialProject.views.src),
+          ServiceProperties.service.views.src,
           'views.src'
         )}
         {this.multipleSelectionProperty(
           'Accepted domains',
-          (this.state.service
-            ? this.state.service.cors.acceptedDomains
-            : initialProject.cors.acceptedDomains),
+          initialProject.cors.acceptedDomains,
           'cors.acceptedDomains'
         )}
         {this.multipleSelectionProperty(
           'Accepted methods',
-          (this.state.service
-            ? this.state.service.cors.methods
-            : initialProject.cors.methods),
+          initialProject.cors.methods,
           'cors.methods'
         )}
         {this.booleanProperty(
           'Pre-flight continue',
-          (this.state.service
-            ? this.state.service.cors.preflightContinue
-            : initialProject.cors.preflightContinue),
+          ServiceProperties.service.cors.preflightContinue,
           'cors.preflightContinue'
         )}
         {this.textProperty(
           'OPTIONs success status',
-          (this.state.service
-            ? this.state.service.cors.optionsSuccessStatus
-            : initialProject.cors.optionsSuccessStatus),
+          ServiceProperties.service.cors.optionsSuccessStatus,
           'cors.optionsSuccessStatus'
         )}
 
@@ -146,17 +117,29 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
   }
 
   private onSave(): void {
-    if (this.state.service) {
+    if (ServiceProperties.service) {
+      if (this.props.onLoading) {
+        this.props.onLoading(true);
+      }
+
       this.projectService
-      .saveProject('org', this.state.service)
+      .saveProject('org', ServiceProperties.service)
       .then(() => {
         if (this.props.onSave) {
           this.props.onSave();
         }
+
+        if (this.props.onLoading) {
+          this.props.onLoading(false);
+        }
       })
       .catch((err: Error) => {
         if (this.props.onError) {
-          this.props.onError();
+          this.props.onError(err);
+        }
+
+        if (this.props.onLoading) {
+          this.props.onLoading(false);
         }
       });
     } else {
@@ -182,23 +165,10 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
             background='none'
             defaultValue={value}
             onChangeValue={(change: string) => {
-              let tempService = Object.assign({}, this.state.service);
-              tempService = _.set(tempService, propertyPath, change);
-              this.setState(
-                update(
-                  this.state,
-                  {
-                    $set: {
-                      service: tempService
-                    }
-                  }
-                ),
-                () => {
-                  if (onChange) {
-                    onChange(change);
-                  }
-                }
-              );
+              _.set(ServiceProperties.service, propertyPath, change);
+              if (onChange) {
+                onChange(change);
+              }
             }}
           />
         </span>
@@ -221,16 +191,15 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
               key={index}
               defaultChecked={
                 !!_.get(
-                  this.state.service,
+                  ServiceProperties.service,
                   // A bit dirty and hacky, plz refactor it asap :P
-                  `${propertyPath}.${_.get(this.state.service, propertyPath).indexOf(value)}`
+                  `${propertyPath}.${_.get(ServiceProperties.service, propertyPath).indexOf(value)}`
                 )
               }
               label={value}
               labelPosition='left'
               onCheck={(change: boolean) => {
-                let tempService = Object.assign({}, this.state.service);
-                const propertyValue = _.get(tempService, propertyPath);
+                const propertyValue = _.get(ServiceProperties.service, propertyPath);
                 const propertyValueIndex = propertyValue.indexOf(value);
 
                 if (change) {
@@ -238,24 +207,12 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
                     propertyValue.push(value);
                   }
                 } else {
-                  _.unset(tempService, `${propertyPath}.${propertyValueIndex}`);
+                  _.unset(ServiceProperties.service, `${propertyPath}.${propertyValueIndex}`);
                 }
 
-                this.setState(
-                  update(
-                    this.state,
-                    {
-                      $set: {
-                        service: tempService
-                      }
-                    }
-                  ),
-                  () => {
-                    if (onChange) {
-                      onChange(change);
-                    }
-                  }
-                );
+                if (onChange) {
+                  onChange(change);
+                }
               }}
             />
           )}
@@ -275,25 +232,12 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
         <span className='label'>{key}</span>
         <span className='value'>
           <CheckBox
-            defaultChecked={_.get(this.state.service, propertyPath)}
+            defaultChecked={_.get(ServiceProperties.service, propertyPath)}
             onCheck={(change: boolean) => {
-              let tempService = Object.assign({}, this.state.service);
-              tempService = _.set(tempService, propertyPath, change);
-              this.setState(
-                update(
-                  this.state,
-                  {
-                    $set: {
-                      service: tempService
-                    }
-                  }
-                ),
-                () => {
-                  if (onChange) {
-                    onChange(change);
-                  }
-                }
-              );
+              _.set(ServiceProperties.service, propertyPath, change);
+              if (onChange) {
+                onChange(change);
+              }
             }}
           />
         </span>

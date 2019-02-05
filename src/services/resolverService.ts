@@ -179,7 +179,7 @@ export class ResolverService {
       type = TypeResolver.Subscription;
     } else {
       type = TypeResolver.Type;
-    };
+    }
 
     // Delete the file
     unlinkSync(resolver.filePath);
@@ -278,7 +278,7 @@ export class ResolverService {
     indexFileContent = indexFileContent
       .replace(`import ${name} from './${name}';\n`, '')
       .replace(`  ${name},`, '');
- 
+
     writeFileSync(
         indexFilePath,
         indexFileContent,

@@ -109,7 +109,11 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
       title: `${addSign} Add new project`
     });
 
-    _.each(projects, (project: Project) => {
+    _.each(projects, (project: Project): boolean | void => {
+      if (!project.exists) {
+        return true;
+      }
+
       const branch: TreeItem = {};
       branch.title = project.name;
       branch.expanded = this.state.selectedProjectId === project.id;
