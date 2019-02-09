@@ -1,4 +1,6 @@
 import * as React from 'react';
+import * as PropTypes from 'prop-types';
+
 import * as _ from 'lodash';
 
 import update from 'immutability-helper';
@@ -15,7 +17,7 @@ import DropDownMenu from 'react-uwp/DropDownMenu';
 import AceEditor from 'react-ace';
 import brace from 'brace';
 import 'brace/mode/typescript';
-import 'brace/theme/cobalt';
+import 'brace/theme/xcode';
 
 export interface IRegisterResolverProps {
   onSuccess?: () => void;
@@ -34,9 +36,6 @@ interface RegisterResolverState {
 const defaultBtnStyle: React.CSSProperties = {
   padding: 10
 };
-const defaultDropDownStyle: React.CSSProperties = {
-  marginRight: '20px',
-};
 
 const resolverTemplate = `
 export default {
@@ -54,6 +53,10 @@ export default {
 `;
 
 export default class RegisterResolver extends React.PureComponent<IRegisterResolverProps, RegisterResolverState> {
+  public context: { theme: ReactUWP.ThemeType };
+
+  static contextTypes = { theme: PropTypes.object };
+
   static projectService: ProjectService = new ProjectService();
   static resolverService: ResolverService = new ResolverService();
   static resolver: Resolver | undefined;
@@ -126,8 +129,16 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
   }
 
   public render() {
+    const { theme } = this.context;
+    const { typographyStyles } = theme;
+    const { subHeader } = typographyStyles || {subHeader: {fontSize: '12px'}};
+
+    const editorCustomClass = this.state.isNew
+      ? 'create'
+      : 'edit';
+
     const title = this.state.isNew
-      ? (<h2>Create a new resolver</h2>)
+      ? (<h5 className='content-title' style={subHeader}>Create a new resolver</h5>)
       : '';
 
     const code = this.currentCode
@@ -139,31 +150,39 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
       )
     ;
 
+    const nameSelector = this.state.availableResolverNames && this.state.availableResolverNames.length > 0
+      ? (
+        <DropDownMenu
+          defaultValue={this.selectedName}
+          values={this.state.availableResolverNames}
+          onChangeValue={(value: string) => { this.selectedName = value; }}
+        />
+      )
+      : '';
+
+    const typeSelector = (
+      <DropDownMenu
+        defaultValue={this.selectedType}
+        values={this.availableTypes}
+        onChangeValue={(value: string) => { this.selectedType = value; }}
+      />
+    );
+
     const propsSelectors = this.state.isNew
       ? (
         <div className='resolver-props-selectors'>
-          <DropDownMenu
-            style={defaultDropDownStyle}
-            defaultValue={this.selectedName}
-            values={this.state.availableResolverNames}
-            onChangeValue={(value: string) => { this.selectedName = value; }}
-          />
-          <DropDownMenu
-            style={defaultDropDownStyle}
-            defaultValue={this.selectedType}
-            values={this.availableTypes}
-            onChangeValue={(value: string) => { this.selectedType = value; }}
-          />
+          {nameSelector}
+          {typeSelector}
         </div>
       )
       : (
         <Button
-            style={defaultBtnStyle}
-            icon='Delete'
-            onClick={this.deleteResolver}
-          >
-            Delete
-          </Button>
+          style={defaultBtnStyle}
+          icon='Delete'
+          onClick={this.deleteResolver}
+        >
+          Delete
+        </Button>
       );
 
     const confirmDialogProps: ContentDialogProps = {
@@ -172,7 +191,7 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
     };
 
     return (
-      <div className='register-resolver screen'>
+      <div className={`register-resolver ${editorCustomClass} screen`}>
         {/* The title */}
         {title}
 
@@ -200,7 +219,7 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
         <AceEditor
           width='100%'
           mode='typescript'
-          theme='cobalt'
+          theme='xcode'
           name='resolver-editor'
           tabSize={2}
           editorProps={{

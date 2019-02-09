@@ -100,6 +100,9 @@ export class App extends React.Component<AppProps, AppState> {
                 <Run {...props} />} />
             </Switch>
           </div>
+          <div className='fx bg-gradient'></div>
+          <div className='fx corner-bottom-right'></div>
+          <div className='fx smoke'></div>
           <Toast
             defaultShow={this.state.showSuccess}
             onToggleShowToast={() => this.setState(update(this.state, {$toggle: ['showSuccess']}))}

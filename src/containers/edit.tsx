@@ -63,9 +63,10 @@ export default class Edit extends React.PureComponent<IEditProps, EditState> {
     } else {
       return (
         <div className='create screen'>
-          <h5 style={subHeader}>
+          <h5 className='content-title' style={subHeader}>
             Edit {this.state.project.name}
             <Button
+              className='title-action'
               icon='Delete'
               onClick={() => { this.onDelete(); }}
             >

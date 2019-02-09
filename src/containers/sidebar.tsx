@@ -88,6 +88,7 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
       return (
         <div>
           <TextBox
+            className='search-input'
             placeholder='Search...'
           />
           {trees}
@@ -139,7 +140,7 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
     return (
       <div key={index}>
         <TreeView
-          style={{ width: '100%', padding: 0 }}
+          className='sidebar-tree'
           iconDirection='left'
           itemHeight={36}
           listSource={tree}

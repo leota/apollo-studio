@@ -2,6 +2,49 @@ html, body, #App, .content {
   height: 100vh;
 }
 
+*::-webkit-scrollbar-thumb {
+  background-color: #c800a4 !important;
+}
+
+*::-webkit-scrollbar-track {
+  background-color: #ffffff0f !important;
+}
+
+button {
+  border-radius: 4px;
+}
+
+*[class^="tree-view-title"] {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+*[class^="tree-view-title"] *[class^="icon"] {
+  display: inline-block;
+  margin-left: 5px;
+}
+
+input {
+  border-radius: 3px;
+}
+
+*[class^="dropDownMenu-root"] {
+  margin-right: 10px;
+  height: 40px !important;
+}
+
+*[class^="dropDownMenu-wrapper"] {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 4px;
+  text-shadow: 0 1px 1px #0000006e;
+  min-height: 40px;
+}
+
+*[class^="dropDownMenu-value"] {
+  position: relative;
+  top: 3px;
+}
+
 .content .screen {
   position: relative;
   height: 100%;
@@ -11,20 +54,75 @@ html, body, #App, .content {
 }
 
 .sidebar {
-  background-color: rgba(0, 0, 0, 0.85);
+  background-color: #392A57;
   width: 300px;
   height: 100vh;
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 11;
+}
+
+.sidebar > div {
+  padding: 10px;
+}
+
+.sidebar .search-input {
+  width: 280px;
+}
+
+.sidebar-tree {
+  width: 100% !important;
+  padding: 0 !important;
+  background: transparent !important;
+  margin-top: 10px;
 }
 
 .content {
   width: calc(100vw - 300px);
   height: 100%;
+  padding: 5px 15px;
   position: absolute;
   top: 0;
   right: 0;
+  z-index: 100;
+}
+
+.fx.bg-gradient {
+  background-image: url('./assets/bg-gradient.svg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  width: calc(100vw - 300px);
+  height: 100%;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.fx.corner-bottom-right {
+  background-image: url('./assets/corner-bottom-right.svg');
+  background-size: 100%;
+  background-repeat: no-repeat;
+  width: 527px;
+  height: 158px;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 10;
+}
+
+.fx.smoke {
+  background-image: url('./assets/rocket-smoke.svg');
+  background-size: cover;
+  background-position: bottom;
+  background-repeat: no-repeat;
+  width: calc(100vw - 300px);
+  height: 100%;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 9;
+  opacity: 0.2;
 }
 
 .register-resolver.screen {
@@ -36,8 +134,32 @@ html, body, #App, .content {
 }
 
 #resolver-editor {
-  padding-top: 25px !important;
-  height: calc(100% - 40px) !important;
+  border-radius: 4px;
+  background: #0000004d;
+  color: white;
+}
+.register-resolver.create #resolver-editor {
+  height: calc(100% - 102px) !important;
+}
+.register-resolver.edit #resolver-editor {
+  height: calc(100% - 52px) !important;
+}
+#resolver-editor .ace_content {
+  font-size: 14px !important;
+}
+#resolver-editor .ace_line {
+  height: 14px !important;
+}
+#resolver-editor .ace_print-margin {
+  width: 1px;
+  background: #ff00c830;
+}
+#resolver-editor .ace_indent-guide {
+  background: none;
+  border-right: 1px solid #ffa5ef40;
+}
+#resolver-editor .ace_cursor {
+  color: #c800a4;
 }
 
 div[class^='toast-wrapper'] {
@@ -64,4 +186,45 @@ div[class^='toast-wrapper'] {
   height: 20px !important;
   padding-top: 8px;
   border-radius: 20px;
+}
+
+.content-title {
+  margin-bottom: 10px;
+}
+
+button.title-action {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.service-property {
+  margin-bottom: 20px;
+}
+.service-property .label {
+  display: block;
+  margin-bottom: 5px;
+}
+.service-property .input-checkbox div[class^="checkbox-wrapper"] {
+  margin-right: 10px;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  padding-right: 10px;
+}
+.service-property .input-checkbox div[class^="checkbox-wrapper"]:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+.toolbar {
+  margin-bottom: 5px;
+}
+
+.toolbar button {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+.toolbar button:first-child {
+  margin-left: 0;
+}
+.toolbar button:last-child {
+  margin-right: 0;
 }

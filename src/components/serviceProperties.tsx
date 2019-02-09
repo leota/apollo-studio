@@ -185,7 +185,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
     return (
       <div key={Math.random()} className='service-property'>
         <span className='label'>{key}</span>
-        <span className='value'>
+        <span className='value input-checkbox'>
           {values.map((value: string, index: number): JSX.Element =>
             <CheckBox
               key={index}
@@ -230,7 +230,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
     return (
       <div key={Math.random()} className='service-property'>
         <span className='label'>{key}</span>
-        <span className='value'>
+        <span className='value input-checkbox'>
           <CheckBox
             defaultChecked={_.get(ServiceProperties.service, propertyPath)}
             onCheck={(change: boolean) => {

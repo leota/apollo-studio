@@ -30,7 +30,7 @@ export default class Create extends React.PureComponent<ICreateProps, CreateStat
 
     return (
       <div className='create screen'>
-        <h5 style={subHeader}>
+        <h5 className='content-title' style={subHeader}>
           Create a new service
         </h5>
         <ServiceProperties

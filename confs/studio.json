@@ -10,7 +10,7 @@
     },
     "accentColor": {
       "description": "The predominant color of the studio User Interface",
-      "value": "#0078D7"
+      "value": "#6c5ce7"
     },
     "fontSize": {
       "description": "The dimensions of texts",
