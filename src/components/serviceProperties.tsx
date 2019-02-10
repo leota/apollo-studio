@@ -49,7 +49,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
           onNameChange
         )}
         {this.textProperty(
-          'Target domain',
+          'Hosting domain',
           ServiceProperties.service.targetDomain,
           'targetDomain'
         )}
@@ -199,7 +199,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
               label={value}
               labelPosition='left'
               onCheck={(change: boolean) => {
-                const propertyValue = _.get(ServiceProperties.service, propertyPath);
+                let propertyValue: any[] = _.get(ServiceProperties.service, propertyPath);
                 const propertyValueIndex = propertyValue.indexOf(value);
 
                 if (change) {
@@ -207,7 +207,11 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
                     propertyValue.push(value);
                   }
                 } else {
-                  _.unset(ServiceProperties.service, `${propertyPath}.${propertyValueIndex}`);
+                  _.set(
+                    ServiceProperties.service,
+                    propertyPath,
+                    propertyValue.filter((value: any, index: number) => value != null && index != propertyValueIndex)
+                  );
                 }
 
                 if (onChange) {
@@ -223,7 +227,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
 
   private booleanProperty(
     key: string,
-    value: boolean,
+    value: any,
     propertyPath: string,
     onChange?: (value: any) => void,
   ): JSX.Element {

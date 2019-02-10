@@ -27,11 +27,11 @@
     "tabSize": 2
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "typings/**/*"
   ],
   "typeRoots": [
-    "./node_modules/@types",
-    "./typings"
+    "node_modules/@types"
   ],
   "filesGlob": [
     "**/*.ts",

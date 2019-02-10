@@ -1,4 +1,4 @@
-import { Resolver, ResolverService } from '../services/resolverService';
+import { Resolver, ResolverService, CustomFile } from '../services/resolverService';
 import { getProjectPath } from '../utils/common';
 import { existsSync } from 'fs';
 
@@ -91,7 +91,13 @@ export class Project implements IProject {
   }
 
   public get resolvers(): Resolver[] {
-    return new ResolverService().getResolversFromProject(this.id);
+    const {resolvers} = new ResolverService().getResolversFromProject(this.id);
+    return resolvers;
+  }
+
+  public get customFiles(): CustomFile[] {
+    const {customFiles} = new ResolverService().getResolversFromProject(this.id);
+    return customFiles;
   }
 
   public get exists(): boolean {

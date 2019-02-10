@@ -7,7 +7,7 @@ import update from 'immutability-helper';
 
 import { Project } from '../models/project';
 import { ProjectService } from '../services';
-import { ResolverService, Resolver, TypeResolver } from '../services/resolverService';
+import { ResolverService, Resolver, TypeResolver, CustomFile } from '../services/resolverService';
 
 import Button from 'react-uwp/Button';
 import ContentDialog, { ContentDialogProps } from 'react-uwp/ContentDialog';
@@ -24,6 +24,7 @@ export interface IRegisterResolverProps {
   match: any;
   location: any;
   history: any;
+  isFile: boolean;
 }
 
 interface RegisterResolverState {
@@ -54,12 +55,12 @@ export default {
 
 export default class RegisterResolver extends React.PureComponent<IRegisterResolverProps, RegisterResolverState> {
   public context: { theme: ReactUWP.ThemeType };
-
   static contextTypes = { theme: PropTypes.object };
 
   static projectService: ProjectService = new ProjectService();
   static resolverService: ResolverService = new ResolverService();
   static resolver: Resolver | undefined;
+  static customFile: CustomFile | undefined;
 
   private currentCode: string;
   private selectedName: string;
@@ -85,47 +86,66 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
   }
 
   static getDerivedStateFromProps(
-    props: IRegisterResolverProps,
-    state: RegisterResolverState
+    props: IRegisterResolverProps
   ): RegisterResolverState {
-    let output = {};
+    let state: RegisterResolverState = {};
 
     if (
       props.match.params.projectId
       && props.match.params.hash
     ) {
-      output = {
+      // The name of the selected entity (resolver | customFile)
+      const name = atob(props.match.params.hash);
+
+      if (!props.isFile) {
+        // Resolver file
+
+        let {resolvers} = RegisterResolver.resolverService
+          .getResolversFromProject(props.match.params.projectId);
+        const resolver = _.find(resolvers, {name});
+
+        if (!resolver) {
+          throw new Error('Cannot find the resolver.');
+        }
+
+        // Setting current selected resolver
+        RegisterResolver.resolver = resolver;
+      } else {
+        // Custom file
+
+        let {customFiles} = RegisterResolver.resolverService
+          .getResolversFromProject(props.match.params.projectId);
+        const file = _.find(customFiles, {name});
+
+        if (!file) {
+          throw new Error('Cannot find the custom file.');
+        }
+
+        // Setting current selected custom file
+        RegisterResolver.customFile = file;
+      }
+
+      state = {
         project: RegisterResolver.projectService
           .getProject(props.match.params.projectId),
         isNew: false,
       };
-
-      const resolvers: Resolver[] = RegisterResolver.resolverService
-        .getResolversFromProject(props.match.params.projectId);
-
-      const name = atob(props.match.params.hash);
-      const resolver = _.find(resolvers, {name});
-
-      if (!resolver) {
-        throw new Error('Cannot find the resolver.');
-      }
-
-      // Setting current selected resolver
-      RegisterResolver.resolver = resolver;
     } else {
+      // Brand new resolver
       if (!props.match.params.projectId) {
         throw new Error('Missing mandatory parameter');
       }
 
       RegisterResolver.resolver = undefined;
-      output = {
+      RegisterResolver.customFile = undefined;
+      state = {
         project: RegisterResolver.projectService
           .getProject(props.match.params.projectId),
         isNew: true
       };
     }
 
-    return output;
+    return state;
   }
 
   public render() {
@@ -138,104 +158,169 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
       : 'edit';
 
     const title = this.state.isNew
-      ? (<h5 className='content-title' style={subHeader}>Create a new resolver</h5>)
+      ? (<h5 className='content-title' style={subHeader}>Create a new {this.props.isFile ? 'file' : 'resolver'}</h5>)
       : '';
 
     const code = this.currentCode
      ? this.currentCode
      : (
-        RegisterResolver.resolver
-          ? RegisterResolver.resolver.content
-          : resolverTemplate
+        !this.props.isFile
+          ? (
+            RegisterResolver.resolver
+            ? RegisterResolver.resolver.content
+            : resolverTemplate
+          )
+          : (
+            RegisterResolver.customFile
+            ? RegisterResolver.customFile.content
+            : ''
+          )
       )
     ;
-
-    const nameSelector = this.state.availableResolverNames && this.state.availableResolverNames.length > 0
-      ? (
-        <DropDownMenu
-          defaultValue={this.selectedName}
-          values={this.state.availableResolverNames}
-          onChangeValue={(value: string) => { this.selectedName = value; }}
-        />
-      )
-      : '';
-
-    const typeSelector = (
-      <DropDownMenu
-        defaultValue={this.selectedType}
-        values={this.availableTypes}
-        onChangeValue={(value: string) => { this.selectedType = value; }}
-      />
-    );
-
-    const propsSelectors = this.state.isNew
-      ? (
-        <div className='resolver-props-selectors'>
-          {nameSelector}
-          {typeSelector}
-        </div>
-      )
-      : (
-        <Button
-          style={defaultBtnStyle}
-          icon='Delete'
-          onClick={this.deleteResolver}
-        >
-          Delete
-        </Button>
-      );
 
     const confirmDialogProps: ContentDialogProps = {
       title: 'Do you confirm the changes?',
       content: 'bla bla',
     };
 
-    return (
-      <div className={`register-resolver ${editorCustomClass} screen`}>
-        {/* The title */}
-        {title}
+    if (!this.props.isFile) {
+      const nameSelector = this.state.availableResolverNames && this.state.availableResolverNames.length > 0
+        ? (
+          <DropDownMenu
+            defaultValue={this.selectedName}
+            values={this.state.availableResolverNames}
+            onChangeValue={(value: string) => { this.selectedName = value; }}
+          />
+        )
+        : '';
 
-        {/* The tools */}
-        <div className='toolbar'>
-          {/* The resolver name/type selectors */}
-          {propsSelectors}
+      const typeSelector = (
+        <DropDownMenu
+          defaultValue={this.selectedType}
+          values={this.availableTypes}
+          onChangeValue={(value: string) => { this.selectedType = value; }}
+        />
+      );
 
+      const propsSelectors = this.state.isNew
+        ? (
+          <div className='resolver-props-selectors'>
+            {nameSelector}
+            {typeSelector}
+          </div>
+        )
+        : (
           <Button
             style={defaultBtnStyle}
-            icon='Save'
-            onClick={this.saveResolver}
+            icon='Delete'
+            onClick={this.deleteResolver}
           >
-            Save
+            Delete
           </Button>
-          <Button
-            style={defaultBtnStyle}
-            icon='HelpLegacy'
-          >
-            Help
-          </Button>
+        );
+
+      return (
+        <div className={`register-resolver ${editorCustomClass} screen`}>
+          {/* The title */}
+          {title}
+
+          {/* The tools */}
+          <div className='toolbar'>
+            {/* The resolver name/type selectors */}
+            {propsSelectors}
+
+            <Button
+              style={defaultBtnStyle}
+              icon='Save'
+              onClick={this.saveResolver}
+            >
+              Save
+            </Button>
+            <Button
+              style={defaultBtnStyle}
+              icon='HelpLegacy'
+            >
+              Help
+            </Button>
+          </div>
+
+          {/* The code editor */}
+          <AceEditor
+            width='100%'
+            mode='typescript'
+            theme='xcode'
+            name='resolver-editor'
+            fontSize={14}
+            tabSize={2}
+            showGutter={true}
+            editorProps={{
+              $blockScrolling: Infinity,
+            }}
+            value={code}
+            onChange={this.onCodeChange}
+          />
+
+          {/* The confirm dialog */}
+          <ContentDialog
+            {...confirmDialogProps}
+            defaultShow={this.state.showConfirmDialog}
+          />
         </div>
+      );
+    } else {
+      return (
+        <div className={`register-resolver ${editorCustomClass} screen`}>
+          {/* The title */}
+          {title}
 
-        {/* The code editor */}
-        <AceEditor
-          width='100%'
-          mode='typescript'
-          theme='xcode'
-          name='resolver-editor'
-          tabSize={2}
-          editorProps={{
-            $blockScrolling: Infinity,
-          }}
-          value={code}
-          onChange={this.onCodeChange}
-        />
+          {/* The tools */}
+          <div className='toolbar'>
+            <Button
+              style={defaultBtnStyle}
+              icon='Delete'
+              onClick={this.deleteResolver}
+            >
+              Delete
+            </Button>
+            <Button
+              style={defaultBtnStyle}
+              icon='Save'
+              onClick={this.saveResolver}
+            >
+              Save
+            </Button>
+            <Button
+              style={defaultBtnStyle}
+              icon='HelpLegacy'
+            >
+              Help
+            </Button>
+          </div>
 
-        {/* The confirm dialog */}
-        <ContentDialog
-          {...confirmDialogProps}
-          defaultShow={this.state.showConfirmDialog}
-        />
-      </div>
-    );
+          {/* The code editor */}
+          <AceEditor
+            width='100%'
+            mode='typescript'
+            theme='xcode'
+            name='resolver-editor'
+            fontSize={14}
+            tabSize={2}
+            showGutter={true}
+            editorProps={{
+              $blockScrolling: Infinity,
+            }}
+            value={code}
+            onChange={this.onCodeChange}
+          />
+
+          {/* The confirm dialog */}
+          <ContentDialog
+            {...confirmDialogProps}
+            defaultShow={this.state.showConfirmDialog}
+          />
+        </div>
+      );
+    }
   }
 
   private onCodeChange(value: string): void {

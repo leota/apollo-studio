@@ -37,6 +37,12 @@ export interface Resolver {
   commonDefinitions?: string; // TODO: Experimental
 }
 
+export interface CustomFile {
+  name: string;
+  filePath: string;
+  content: string;
+}
+
 export class ResolverService {
   constructor() {
     // do nothing
@@ -62,12 +68,14 @@ export class ResolverService {
     return output;
   }
 
-  public getResolversFromProject(projectId: string): Resolver[] {
+  public getResolversFromProject(projectId: string): {resolvers: Resolver[], customFiles: CustomFile[]} {
     const resolversPath = path.join(getProjectPath(projectId), 'server', 'resolvers');
     const files = scandir(resolversPath, {
         nodir: true
     });
     const resolvers: Resolver[] = [];
+    const customFiles: CustomFile[] = [];
+
     _.each(files, (file: any) => {
       if (file.path.indexOf('index.ts') > -1) {
         return;
@@ -87,12 +95,19 @@ export class ResolverService {
       }
 
       const classContent = readFileSync(file.path, 'utf8');
-      resolvers.push(
-        this.getResolverEntityFromClass(file.path, classContent, type)
-      );
+      if (classContent.includes('resolver: {')) {
+        // It's a legit resolver (note: maybe a better method is needed?)
+        resolvers.push(
+          this.getResolverEntityFromContent(file.path, classContent, type)
+        );
+      } else {
+        customFiles.push(
+          this.getCustomFileEntityFromContent(file.path, classContent)
+        );
+      }
     });
 
-    return resolvers;
+    return {resolvers, customFiles};
   }
 
   public createResolver(
@@ -286,7 +301,7 @@ export class ResolverService {
       );
   }
 
-  private getResolverEntityFromClass(
+  private getResolverEntityFromContent(
     filePath: string,
     classContent: string,
     type: TypeResolver
@@ -331,6 +346,17 @@ export class ResolverService {
       isMutation: type === TypeResolver.Mutation,
       isSubscription: type === TypeResolver.Subscription,
       isType: type === TypeResolver.Type,
+      content: classContent,
+    };
+  }
+
+  private getCustomFileEntityFromContent(
+    filePath: string,
+    classContent: string,
+  ): CustomFile {
+    return {
+      name: path.parse(filePath).base.replace('.ts', ''),
+      filePath,
       content: classContent,
     };
   }

@@ -56,7 +56,7 @@ export class ProjectService {
     const index = _.findIndex(ProjectService.currentProjects[org], {id: newConf.id});
     ProjectService.currentProjects[org].splice(index, 1, newConf);
 
-    return new Promise((resolve: any, reject: any) => {
+    return new Promise((resolve: any) => {
       writeFileSync(
         this.filePath,
         JSON.stringify(ProjectService.currentProjects, null, 2),
@@ -102,7 +102,7 @@ export class ProjectService {
   }
 
   public deleteProject(org: string, project: Project): Promise<boolean> {
-    return new Promise((resolve: any, reject: any) => {
+    return new Promise((resolve: any) => {
       const projectPath = getProjectPath(project);
       _.remove(ProjectService.currentProjects[org], {id: project.id});
       rimraf.sync(projectPath);

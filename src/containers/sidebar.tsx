@@ -5,7 +5,7 @@ import update from 'immutability-helper';
 import { matchPath, withRouter } from 'react-router';
 
 import { Project } from '../models/project';
-import { Resolver } from '../services/resolverService';
+import { Resolver, CustomFile } from '../services/resolverService';
 
 import TextBox from 'react-uwp/TextBox';
 import TreeView, { TreeItem } from 'react-uwp/TreeView';
@@ -26,7 +26,6 @@ const addSign = '+';
 
 class Sidebar extends React.Component<SidebarProps, SidebarState> {
   private selectedProject: Project | undefined;
-  private selectedResolver: Resolver | undefined;
 
   constructor(props: SidebarProps) {
     super(props);
@@ -103,6 +102,8 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
     }
   }
 
+  // TODO: After having fixed https://github.com/marcellobarile/apollo-studio/issues/1
+  // be sure to fix the hacks inside this method (} as any etc...)
   private getProjectsTree(index: string, projects: Project[]): JSX.Element {
     const tree: TreeItem[] = [];
 
@@ -123,15 +124,30 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
       _.each(project.resolvers, (resolver: Resolver) => {
         if (branch.children) {
           branch.children.push({
-            title: resolver.name
-          });
+            rawTitle: resolver.name,
+            titleNode: (<span className='tree-item resolver'>{resolver.name}</span>)
+          } as any);
+        }
+      });
+
+      _.each(project.customFiles, (file: CustomFile) => {
+        if (branch.children) {
+          branch.children.push({
+            rawTitle: file.name,
+            titleNode: (<span className='tree-item custom-file'>{file.name}</span>)
+          } as any);
         }
       });
 
       if (branch.children) {
-        branch.children.push({
+        branch.children.push(
+          {
           title: `${addSign} Add new resolver`
-        });
+          },
+          {
+            title: `${addSign} Add new file`
+          }
+        );
       }
 
       tree.push(branch);
@@ -151,15 +167,19 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
     );
   }
 
+  // TODO: After having fixed https://github.com/marcellobarile/apollo-studio/issues/1
+  // be sure to fix the hacks inside this method (item as any etc...)
   private onItemSelected(item: TreeItem): void {
     // NOTE: Due to the limitations of the TreeView we had
     // to find this dirty hacky solution in order to understand
     // the kind of item who have been selected.
-    if (item.title && item.title.indexOf(addSign) === 0) {
-      // It's the adding action
-      // TODO: Find a better solution for match the
-      // adding actions.
-      if (item.title.indexOf('project') > 0) {
+    if (
+      item.title
+      && item.title.indexOf(addSign) === 0
+    ) {
+      // It's the "add" action
+      // TODO: Find a better solution for matching  it
+      if (item.title.includes('Add new project')) {
         // Add a new project
         this.onNewProject();
       } else {
@@ -169,7 +189,10 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
         }
         this.onNewResolver(this.selectedProject.id);
       }
-    } else if (item.children && item.children.length > 0) {
+    } else if (
+      item.children
+      && item.children.length > 0
+    ) {
       // It's a project
       let project: Project | undefined;
       _.each(this.props.items, (org: any): any => {
@@ -190,18 +213,22 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
         throw new Error('Trying to select a resolver outside a project selection.');
       }
 
-      const resolver = _.find(this.selectedProject.resolvers, {name: item.title});
+      const resolver = _.find(this.selectedProject.resolvers, {name: (item as any).rawTitle});
       if (!resolver) {
-        throw new Error('Trying to select a resolver that does not exist.');
+        const customFile = _.find(this.selectedProject.customFiles, {name: (item as any).rawTitle});
+        if (!customFile) {
+          throw new Error('Trying to select a resolver that does not exist.');
+        } else {
+          this.onCustomFileSelected(this.selectedProject.id, customFile as CustomFile);
+        }
+      } else {
+        this.onResolverSelected(this.selectedProject.id, resolver as Resolver);
       }
-
-      this.onResolverSelected(this.selectedProject.id, resolver);
     }
   }
 
   private onProjectSelected(project: Project): void {
     this.selectedProject = project;
-    this.selectedResolver = undefined;
     this.setState(update(
       this.state,
       {
@@ -215,10 +242,16 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
   }
 
   private onResolverSelected(projectId: string, resolver: Resolver): void {
-    this.selectedResolver = resolver;
     const resolverHash = btoa(resolver.name);
     if (!this.props.history.location.pathname.match(new RegExp(`\/${resolverHash}$`, 'ig'))) {
       this.props.history.push(`/resolvers/${projectId}/${resolverHash}`);
+    }
+  }
+
+  private onCustomFileSelected(projectId: string, customFile: CustomFile): void {
+    const customFileHash = btoa(customFile.name);
+    if (!this.props.history.location.pathname.match(new RegExp(`\/${customFileHash}$`, 'ig'))) {
+      this.props.history.push(`/files/${projectId}/${customFileHash}`);
     }
   }
 

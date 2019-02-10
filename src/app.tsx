@@ -94,7 +94,10 @@ export class App extends React.Component<AppProps, AppState> {
                 <RegisterResolver {...props} onSuccess={this.refresh} />} />
 
               <Route path='/resolvers/:projectId/:hash' exact component={(props: any) =>
-                <RegisterResolver {...props} onSuccess={this.refresh} items={this.state.projects} />} />
+                <RegisterResolver {...props} onSuccess={this.refresh} items={this.state.projects} isFile={false} />} />
+
+              <Route path='/files/:projectId/:hash' exact component={(props: any) =>
+                <RegisterResolver {...props} onSuccess={this.refresh} items={this.state.projects} isFile={true} />} />
 
               <Route path='/run' exact component={(props: any) =>
                 <Run {...props} />} />

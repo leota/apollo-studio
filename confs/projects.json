@@ -24,11 +24,7 @@
         ],
         "methods": [
           "GET",
-          "HEAD",
-          "PUT",
-          null,
-          "POST",
-          "DELETE"
+          "POST"
         ],
         "preflightContinue": false,
         "optionsSuccessStatus": 200
