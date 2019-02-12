@@ -10,6 +10,17 @@ import { Resolver, CustomFile } from '../services/resolverService';
 import TextBox from 'react-uwp/TextBox';
 import TreeView, { TreeItem } from 'react-uwp/TreeView';
 
+enum TREE_ITEM_TYPE {
+  ADD_NEW_PROJECT,
+  ADD_NEW_RESOLVER,
+  ADD_NEW_FILE,
+  ADD_NEW_FOLDER,
+  PROJECT,
+  RESOLVER,
+  FOLDER,
+  FILE,
+}
+
 export interface SidebarProps {
   // items is a list of orgs with projects inside
   items: any;
@@ -108,16 +119,18 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
     const tree: TreeItem[] = [];
 
     tree.push({
-      title: `${addSign} Add new project`
-    });
+      title: `${addSign} Add new project`,
+      type: TREE_ITEM_TYPE.ADD_NEW_PROJECT,
+    } as any);
 
     _.each(projects, (project: Project): boolean | void => {
       if (!project.exists) {
         return true;
       }
 
-      const branch: TreeItem = {};
+      const branch: TreeItem | any = {};
       branch.title = project.name;
+      branch.type = TREE_ITEM_TYPE.PROJECT;
       branch.expanded = this.state.selectedProjectId === project.id;
       branch.children = [];
 
@@ -125,7 +138,8 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
         if (branch.children) {
           branch.children.push({
             rawTitle: resolver.name,
-            titleNode: (<span className='tree-item resolver'>{resolver.name}</span>)
+            titleNode: (<span className='tree-item resolver'>{resolver.name}</span>),
+            type: TREE_ITEM_TYPE.RESOLVER,
           } as any);
         }
       });
@@ -134,7 +148,8 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
         if (branch.children) {
           branch.children.push({
             rawTitle: file.name,
-            titleNode: (<span className='tree-item custom-file'>{file.name}</span>)
+            titleNode: (<span className='tree-item custom-file'>{file.name}</span>),
+            type: TREE_ITEM_TYPE.FILE,
           } as any);
         }
       });
@@ -142,11 +157,17 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
       if (branch.children) {
         branch.children.push(
           {
-          title: `${addSign} Add new resolver`
-          },
+            title: `${addSign} Add new resolver`,
+            type: TREE_ITEM_TYPE.ADD_NEW_RESOLVER,
+          } as any,
           {
-            title: `${addSign} Add new file`
-          }
+            title: `${addSign} Add new folder`,
+            type: TREE_ITEM_TYPE.ADD_NEW_FOLDER,
+          } as any,
+          {
+            title: `${addSign} Add new file`,
+            type: TREE_ITEM_TYPE.ADD_NEW_FILE,
+          } as any
         );
       }
 
@@ -169,38 +190,25 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
 
   // TODO: After having fixed https://github.com/marcellobarile/apollo-studio/issues/1
   // be sure to fix the hacks inside this method (item as any etc...)
-  private onItemSelected(item: TreeItem): void {
-    // NOTE: Due to the limitations of the TreeView we had
-    // to find this dirty hacky solution in order to understand
-    // the kind of item who have been selected.
-    if (
-      item.title
-      && item.title.indexOf(addSign) === 0
-    ) {
-      // It's the "add" action
-      // TODO: Find a better solution for matching  it
-      if (item.title.includes('Add new project')) {
-        // Add a new project
-        this.onNewProject();
-      } else if (item.title.includes('Add new file')) {
-        // Add a new custom file
-        if (!this.selectedProject) {
-          throw new Error('Trying to select a resolver outside a project selection.');
-        }
-        this.onNewCustomFile(this.selectedProject.id);
-      } else {
-        // Add a new resolver
-        if (!this.selectedProject) {
-          throw new Error('Trying to select a resolver outside a project selection.');
-        }
-        this.onNewResolver(this.selectedProject.id);
+  private onItemSelected(item: TreeItem | any): void {
+    console.log(item);
+    if (item.type == TREE_ITEM_TYPE.ADD_NEW_PROJECT) {
+      // Add a new project
+      this.onNewProject();
+    } else if (item.type == TREE_ITEM_TYPE.ADD_NEW_RESOLVER) {
+      // Add new resolver
+      if (!this.selectedProject) {
+        throw new Error('Trying to select a resolver outside a project selection.');
       }
-    } else if (
-      item.children
-      && item.children.length > 0
-    ) {
-      // It's a project
+      this.onNewResolver(this.selectedProject.id);
+    } else if (item.type == TREE_ITEM_TYPE.ADD_NEW_FILE) {
+      // TODO: Add a new file
+    } else if (item.type == TREE_ITEM_TYPE.ADD_NEW_FOLDER) {
+      // TODO: Add a new folder
+    } else if (item.type == TREE_ITEM_TYPE.PROJECT) {
+      // Open a project
       let project: Project | undefined;
+
       _.each(this.props.items, (org: any): any => {
         project = _.find(org, {name: item.title}) as Project;
         if (project) {
@@ -213,23 +221,22 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
       }
 
       this.onProjectSelected(project);
-    } else {
-      // It's a resolver
+    } else if (item.type === TREE_ITEM_TYPE.RESOLVER) {
+      // Open a resolver
       if (!this.selectedProject) {
         throw new Error('Trying to select a resolver outside a project selection.');
       }
 
       const resolver = _.find(this.selectedProject.resolvers, {name: (item as any).rawTitle});
-      if (!resolver) {
-        const customFile = _.find(this.selectedProject.customFiles, {name: (item as any).rawTitle});
-        if (!customFile) {
-          throw new Error('Trying to select a resolver that does not exist.');
-        } else {
-          this.onCustomFileSelected(this.selectedProject.id, customFile as CustomFile);
-        }
-      } else {
-        this.onResolverSelected(this.selectedProject.id, resolver as Resolver);
+      this.onResolverSelected(this.selectedProject.id, resolver as Resolver);
+    } else if (item.type === TREE_ITEM_TYPE.FILE) {
+      // Open a file
+      if (!this.selectedProject) {
+        throw new Error('Trying to select a resolver outside a project selection.');
       }
+
+      const customFile = _.find(this.selectedProject.customFiles, {name: (item as any).rawTitle});
+      this.onCustomFileSelected(this.selectedProject.id, customFile as CustomFile);
     }
   }
 
