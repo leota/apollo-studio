@@ -182,6 +182,12 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
       if (item.title.includes('Add new project')) {
         // Add a new project
         this.onNewProject();
+      } else if (item.title.includes('Add new file')) {
+        // Add a new custom file
+        if (!this.selectedProject) {
+          throw new Error('Trying to select a resolver outside a project selection.');
+        }
+        this.onNewCustomFile(this.selectedProject.id);
       } else {
         // Add a new resolver
         if (!this.selectedProject) {
@@ -264,6 +270,12 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
   private onNewProject(): void {
     if (!this.props.history.location.pathname.match(new RegExp(`\/create$`, 'ig'))) {
       this.props.history.push(`/create`);
+    }
+  }
+
+  private onNewCustomFile(projectId: string): void {
+    if (!this.props.history.location.pathname.match(new RegExp(`\/files\/${projectId}\/new$`, 'ig'))) {
+      this.props.history.push(`/files/${projectId}/new`);
     }
   }
 }

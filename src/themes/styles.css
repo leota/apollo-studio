@@ -102,9 +102,13 @@ input {
 }
 
 .fx.bg-gradient {
+  /*
   background-image: url('./assets/bg-gradient.svg');
   background-size: cover;
   background-repeat: no-repeat;
+  */
+  background-color: #89539F;
+  background-image: linear-gradient(to bottom right, #89539F, #524095);
   width: calc(100vw - 300px);
   height: 100%;
   position: absolute;
