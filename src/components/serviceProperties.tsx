@@ -173,6 +173,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
     if (opts && opts.isMultiline) {
       textbox = (
         <textarea
+          defaultValue={value}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
             let { value } = e.target;
 
@@ -186,9 +187,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
               opts.onChange(value);
             }
           }}
-        >
-          {value}
-        </textarea>
+        />
       );
     } else {
       textbox = (
