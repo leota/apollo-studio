@@ -37,7 +37,7 @@ export class App extends React.Component<AppProps, AppState> {
 
   private successToastDelay = 5500;
   private successToastTitle = 'All done';
-  private successToastLines = ['A new service is ready to be run', 'Enjoy!'];
+  private successToastLines = ['The changes have been saved!', 'Enjoy!'];
 
   private errorToastDelay = 5500;
   private errorToastTitle = 'Ooops...';
@@ -149,7 +149,7 @@ export class App extends React.Component<AppProps, AppState> {
     ));
   }
 
-  private onLoading(state: boolean): void {
+  private onLoading(): void {
     this.setState(update(
       this.state,
       {

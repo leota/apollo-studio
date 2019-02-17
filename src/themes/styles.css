@@ -17,15 +17,40 @@ button {
 *[class^="tree-view-title"] {
   border-radius: 4px;
   overflow: hidden;
+  margin-bottom: 2px;
 }
 
 *[class^="tree-view-title"] *[class^="icon"] {
   display: inline-block;
   margin-left: 5px;
+  margin-right: 5px;
 }
 
-input {
+input, textarea {
   border-radius: 3px;
+}
+
+textarea {
+  line-height: 32px;
+  height: 32px;
+  width: 296px;
+  padding: 0 8px;
+  font-size: inherit;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  color: #fff;
+  background: none;
+  box-shadow: inset 0px 0px 0 2px rgba(255, 255, 255, 0.2);
+  border: none;
+  transition: all .25s;
+  outline: none;
+}
+
+textarea:focus {
+  color: #000 !important;
+  background: #fff !important;
+  box-shadow: inset 0px 0px 0 2px #6c5ce7;
 }
 
 *[class^="dropDownMenu-root"] {
@@ -142,6 +167,13 @@ input {
   opacity: 0.2;
 }
 
+.create.screen .service-properties textarea {
+  height: 200px;
+  width: 100%;
+  background: #ffffff33;
+  line-height: 20px;
+}
+
 .register-resolver.screen {
   padding: 0;
 }
@@ -174,6 +206,9 @@ input {
 }
 #resolver-editor .ace_string {
   color: #17ff00;
+}
+#resolver-editor .ace_marker-layer .ace_selection {
+  background: #00000099;
 }
 
 div[class^='toast-wrapper'] {
@@ -231,7 +266,6 @@ button.title-action {
 .toolbar {
   margin-bottom: 5px;
 }
-
 .toolbar button {
   margin-left: 5px;
   margin-right: 5px;
@@ -241,4 +275,17 @@ button.title-action {
 }
 .toolbar button:last-child {
   margin-right: 0;
+}
+
+.new-folder-input {
+  color: white !important;
+  text-shadow: 0 1px 1px #0000006e;
+  display: inline-block !important;
+  width: 244px !important;
+  height: 40px !important;
+  margin-right: 10px !important;
+  background-color: #ffffff3b !important;
+}
+.new-folder-input::placeholder {
+  color: white !important;
 }

@@ -17,6 +17,9 @@ const createWindow = async () => {
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    frame: true,
+    autoHideMenuBar: true,
+    title: 'Apollo Studio - the easy way to set up a GraphQL service'
   });
   mainWindow.maximize();
 

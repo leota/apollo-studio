@@ -14,10 +14,8 @@ enum TREE_ITEM_TYPE {
   ADD_NEW_PROJECT,
   ADD_NEW_RESOLVER,
   ADD_NEW_FILE,
-  ADD_NEW_FOLDER,
   PROJECT,
   RESOLVER,
-  FOLDER,
   FILE,
 }
 
@@ -31,6 +29,7 @@ export interface SidebarProps {
 
 export interface SidebarState {
   selectedProjectId: string;
+  searchQuery: string;
 }
 
 const addSign = '+';
@@ -42,6 +41,7 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
     super(props);
     this.state = {
       selectedProjectId: '',
+      searchQuery: '',
     };
     this.onItemSelected = this.onItemSelected.bind(this);
   }
@@ -50,7 +50,7 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
     props: SidebarProps,
     state: SidebarState
   ): SidebarState {
-    // TODO: Improve this part
+    // TODO: Improve this block
     const matchA = matchPath(props.location.pathname, {
       path: '/edit/:id',
       exact: true,
@@ -79,7 +79,8 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
 
     if (projectId) {
       return {
-        selectedProjectId: projectId
+        selectedProjectId: projectId,
+        searchQuery: state.searchQuery,
       };
     } else {
       return state;
@@ -100,6 +101,7 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
           <TextBox
             className='search-input'
             placeholder='Search...'
+            onChangeValue={(value: string) => this.setState(update(this.state, { $set: { searchQuery: value }}))}
           />
           {trees}
         </div>
@@ -136,9 +138,15 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
 
       _.each(project.resolvers, (resolver: Resolver) => {
         if (branch.children) {
+          const isHighlighted = this.state.searchQuery != ''
+            && (
+              resolver.name.includes(this.state.searchQuery)
+              || resolver.content.includes(this.state.searchQuery)
+            );
           branch.children.push({
             rawTitle: resolver.name,
-            titleNode: (<span className='tree-item resolver'>{resolver.name}</span>),
+            titleNode: (<span className={`tree-item resolver ${isHighlighted ? 'highlighted' : ''}`}>{resolver.name}</span>),
+            focus: isHighlighted,
             type: TREE_ITEM_TYPE.RESOLVER,
           } as any);
         }
@@ -146,9 +154,15 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
 
       _.each(project.customFiles, (file: CustomFile) => {
         if (branch.children) {
+          const isHighlighted = this.state.searchQuery != ''
+            && (
+              file.name.includes(this.state.searchQuery)
+              || file.content.includes(this.state.searchQuery)
+            );
           branch.children.push({
             rawTitle: file.name,
-            titleNode: (<span className='tree-item custom-file'>{file.name}</span>),
+            titleNode: (<span className={`tree-item custom-file ${isHighlighted ? 'highlighted' : ''}`}>{file.name}</span>),
+            focus: isHighlighted,
             type: TREE_ITEM_TYPE.FILE,
           } as any);
         }
@@ -159,10 +173,6 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
           {
             title: `${addSign} Add new resolver`,
             type: TREE_ITEM_TYPE.ADD_NEW_RESOLVER,
-          } as any,
-          {
-            title: `${addSign} Add new folder`,
-            type: TREE_ITEM_TYPE.ADD_NEW_FOLDER,
           } as any,
           {
             title: `${addSign} Add new file`,
@@ -191,7 +201,6 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
   // TODO: After having fixed https://github.com/marcellobarile/apollo-studio/issues/1
   // be sure to fix the hacks inside this method (item as any etc...)
   private onItemSelected(item: TreeItem | any): void {
-    console.log(item);
     if (item.type == TREE_ITEM_TYPE.ADD_NEW_PROJECT) {
       // Add a new project
       this.onNewProject();
@@ -202,9 +211,10 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
       }
       this.onNewResolver(this.selectedProject.id);
     } else if (item.type == TREE_ITEM_TYPE.ADD_NEW_FILE) {
-      // TODO: Add a new file
-    } else if (item.type == TREE_ITEM_TYPE.ADD_NEW_FOLDER) {
-      // TODO: Add a new folder
+      if (!this.selectedProject) {
+        throw new Error('Trying to select a resolver outside a project selection.');
+      }
+      this.onNewCustomFile(this.selectedProject.id);
     } else if (item.type == TREE_ITEM_TYPE.PROJECT) {
       // Open a project
       let project: Project | undefined;

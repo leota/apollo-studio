@@ -75,7 +75,6 @@ export const initialProject = {
 
 export class Project implements IProject {
   public id: string;
-  public name: string;
   public targetDomain: string;
   public defaults: Defaults;
   public graphql: Graphql;
@@ -84,10 +83,21 @@ export class Project implements IProject {
   public cors: Cors;
   public remotes: Remotes;
 
+  private _name: string;
+
   constructor(
     data: IProject
   ) {
     Object.assign(this, data);
+  }
+
+  public get name(): string {
+    // Capitalize the name
+    return `${this._name[0].toUpperCase()}${this._name.substr(1, this._name.length)}`;
+  }
+
+  public set name(value: string) {
+    this._name = value;
   }
 
   public get resolvers(): Resolver[] {

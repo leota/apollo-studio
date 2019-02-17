@@ -36,9 +36,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
   }
 
   public render() {
-    const onNameChange = (value: any) => {
-      /* do nothing */
-    };
+    const onNameChange = (value: any) => { /* do nothing */ };
 
     return (
       <div className='service-properties'>
@@ -46,7 +44,7 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
           'Service name',
           ServiceProperties.service.name,
           'name',
-          onNameChange
+          {onChange: onNameChange}
         )}
         {this.textProperty(
           'Hosting domain',
@@ -103,6 +101,12 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
           ServiceProperties.service.cors.optionsSuccessStatus,
           'cors.optionsSuccessStatus'
         )}
+        {this.textProperty(
+          'Remotes',
+          ServiceProperties.service.remotes,
+          'remotes',
+          {isJson: true, isMultiline: true}
+        )}
 
         <div className='actions'>
           <Button
@@ -151,26 +155,66 @@ class ServiceProperties extends React.PureComponent<ServicePropertiesProps, Serv
     key: string,
     value: any,
     propertyPath: string,
-    onChange?: (value: any) => void,
+    opts?: {
+      isJson?: boolean;
+      isMultiline?: boolean;
+      onChange?: (value: any) => void
+    },
   ): JSX.Element {
     if (value == null) {
       return (<div />);
+    }
+
+    if (opts && opts.isJson) {
+      value = JSON.stringify(value, null, 2);
+    }
+
+    let textbox: JSX.Element;
+    if (opts && opts.isMultiline) {
+      textbox = (
+        <textarea
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+            let { value } = e.target;
+
+            if (opts && opts.isJson) {
+              value = JSON.parse(value);
+            }
+
+            _.set(ServiceProperties.service, propertyPath, value);
+
+            if (opts && opts.onChange) {
+              opts.onChange(value);
+            }
+          }}
+        >
+          {value}
+        </textarea>
+      );
+    } else {
+      textbox = (
+        <TextBox
+          background='none'
+          defaultValue={value}
+          onChangeValue={(change: string) => {
+            if (opts && opts.isJson) {
+              change = JSON.parse(change);
+            }
+
+            _.set(ServiceProperties.service, propertyPath, change);
+
+            if (opts && opts.onChange) {
+              opts.onChange(change);
+            }
+          }}
+        />
+      );
     }
 
     return (
       <div key={Math.random()} className='service-property'>
         <span className='label'>{key}</span>
         <span className='value'>
-          <TextBox
-            background='none'
-            defaultValue={value}
-            onChangeValue={(change: string) => {
-              _.set(ServiceProperties.service, propertyPath, change);
-              if (onChange) {
-                onChange(change);
-              }
-            }}
-          />
+          {textbox}
         </span>
       </div>
     );

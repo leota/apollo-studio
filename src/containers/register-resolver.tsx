@@ -12,12 +12,14 @@ import { ResolverService, Resolver, TypeResolver, CustomFile } from '../services
 import Button from 'react-uwp/Button';
 import ContentDialog, { ContentDialogProps } from 'react-uwp/ContentDialog';
 import DropDownMenu from 'react-uwp/DropDownMenu';
+import TextBox from 'react-uwp/TextBox';
 
 // The editor
 import AceEditor from 'react-ace';
 import brace from 'brace';
 import 'brace/mode/typescript';
 import 'brace/theme/xcode';
+import * as path from 'path';
 
 export interface IRegisterResolverProps {
   onSuccess?: () => void;
@@ -32,6 +34,7 @@ interface RegisterResolverState {
   isNew?: boolean;
   showConfirmDialog?: boolean;
   availableResolverNames?: string[];
+  availableFolders?: string[];
 }
 
 const defaultBtnStyle: React.CSSProperties = {
@@ -65,6 +68,8 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
   private currentCode: string;
   private selectedName: string;
   private selectedType: string;
+  private selectedFolder: string = '/';
+  private currentFilename: string;
 
   private availableTypes: TypeResolver[] = [
     TypeResolver.Query,
@@ -82,6 +87,8 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
 
     this.saveResolver = this.saveResolver.bind(this);
     this.deleteResolver = this.deleteResolver.bind(this);
+    this.saveFile = this.saveFile.bind(this);
+    this.deleteFile = this.deleteFile.bind(this);
     this.onCodeChange = this.onCodeChange.bind(this);
   }
 
@@ -89,6 +96,7 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
     props: IRegisterResolverProps
   ): RegisterResolverState {
     let state: RegisterResolverState = {};
+    let availableFolders: string[] = [];
 
     if (
       props.match.params.projectId
@@ -112,9 +120,12 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
         RegisterResolver.resolver = resolver;
       } else {
         // Custom file
-
         let {customFiles} = RegisterResolver.resolverService
           .getResolversFromProject(props.match.params.projectId);
+
+        availableFolders = RegisterResolver.resolverService
+          .getCustomFoldersFromProject(props.match.params.projectId);
+
         const file = _.find(customFiles, {name});
 
         if (!file) {
@@ -129,20 +140,35 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
         project: RegisterResolver.projectService
           .getProject(props.match.params.projectId),
         isNew: false,
+        availableFolders: availableFolders
       };
     } else {
-      // Brand new resolver
       if (!props.match.params.projectId) {
         throw new Error('Missing mandatory parameter');
       }
 
       RegisterResolver.resolver = undefined;
       RegisterResolver.customFile = undefined;
-      state = {
-        project: RegisterResolver.projectService
-          .getProject(props.match.params.projectId),
-        isNew: true
-      };
+
+      if (!props.isFile) {
+        // Brand new resolver
+        state = {
+          project: RegisterResolver.projectService
+            .getProject(props.match.params.projectId),
+          isNew: true
+        };
+      } else {
+        // Brand new custom file
+        availableFolders = RegisterResolver.resolverService
+          .getCustomFoldersFromProject(props.match.params.projectId);
+
+        state = {
+          project: RegisterResolver.projectService
+            .getProject(props.match.params.projectId),
+          isNew: true,
+          availableFolders: availableFolders
+        };
+      }
     }
 
     return state;
@@ -184,6 +210,7 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
     };
 
     if (!this.props.isFile) {
+      // Resolver editor
       const nameSelector = this.state.availableResolverNames && this.state.availableResolverNames.length > 0
         ? (
           <DropDownMenu
@@ -202,7 +229,7 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
         />
       );
 
-      const propsSelectors = this.state.isNew
+      const resolverActions = this.state.isNew
         ? (
           <div className='resolver-props-selectors'>
             {nameSelector}
@@ -226,8 +253,8 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
 
           {/* The tools */}
           <div className='toolbar'>
-            {/* The resolver name/type selectors */}
-            {propsSelectors}
+            {/* The resolver name/type selectors | delete button */}
+            {resolverActions}
 
             <Button
               style={defaultBtnStyle}
@@ -268,6 +295,38 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
         </div>
       );
     } else {
+      const newFileFolderInputs = this.state.isNew
+        ? (
+          <React.Fragment>
+            {/*
+            <DropDownMenu
+              defaultValue={this.selectedFolder}
+              values={this.state.availableFolders}
+              onChangeValue={(value: string) => { this.selectedFolder = value; }}
+            />
+            */}
+            <TextBox
+              className='new-folder-input'
+              placeholder={`Type the filename here`}
+              onChangeValue={(value: string) => { this.currentFilename = value; }}
+            />
+          </React.Fragment>
+        )
+        : '';
+
+      const deleteButton = !this.state.isNew
+        ? (
+          <Button
+            style={defaultBtnStyle}
+            icon='Delete'
+            onClick={this.deleteFile}
+          >
+            Delete
+          </Button>
+        )
+        : '';
+
+      // Custom file editor
       return (
         <div className={`register-resolver ${editorCustomClass} screen`}>
           {/* The title */}
@@ -275,17 +334,12 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
 
           {/* The tools */}
           <div className='toolbar'>
-            <Button
-              style={defaultBtnStyle}
-              icon='Delete'
-              onClick={this.deleteResolver}
-            >
-              Delete
-            </Button>
+            {newFileFolderInputs}
+            {deleteButton}
             <Button
               style={defaultBtnStyle}
               icon='Save'
-              onClick={this.saveResolver}
+              onClick={this.saveFile}
             >
               Save
             </Button>
@@ -350,6 +404,7 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
         } else {
           // TODO: Please select a name
           alert('Please, select a name');
+          return;
         }
       }
 
@@ -358,15 +413,12 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
         this.selectedType = TypeResolver.Query;
       }
 
-      if (this.selectedName && this.selectedType) {
-        // A new resolver
-        this.commitChanges(
-          this.currentCode,
-          this.selectedName,
-          this.selectedType as TypeResolver
-        );
-      }
-
+      // A new resolver
+      this.commitChanges(
+        this.currentCode,
+        this.selectedName,
+        this.selectedType as TypeResolver
+      );
     } else {
       // Just update the content
       this.commitChanges(
@@ -407,6 +459,61 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
     }
   }
 
+  private saveFile(): void {
+    if (this.state.isNew) {
+      if (this.currentFilename.length == 0) {
+        // TODO: Dialog
+        alert('Please type a filename');
+        return;
+      }
+
+      if (!this.selectedFolder) {
+        this.selectedFolder = '/';
+      }
+
+      // A new file
+      this.commitFileChanges(
+        this.currentCode,
+        this.selectedFolder,
+        this.currentFilename,
+      );
+    } else {
+      // Just update the content
+      this.commitFileChanges(
+        this.currentCode
+      );
+    }
+
+    // All the operations above are sync,
+    // it's safe to call the callback right away
+    if (this.props.onSuccess) {
+      this.props.onSuccess();
+    }
+  }
+
+  private deleteFile(): void {
+    if (!this.state.project) {
+      throw new Error('Unexpected error while deleting the current resolver.');
+    }
+
+    if (this.state.isNew || !RegisterResolver.customFile) {
+      throw new Error('Nothing to be deleted.');
+    } else {
+      // TODO: Ask confirm
+
+      RegisterResolver.resolverService
+        .deleteFile(RegisterResolver.customFile.filePath);
+
+      this.props.history.push(`/edit/${this.state.project.id}`);
+
+      // All the operations above are sync,
+      // it's safe to call the callback right away
+      if (this.props.onSuccess) {
+        this.props.onSuccess();
+      }
+    }
+  }
+
   private commitChanges(
     classContent: string,
     name?: string,
@@ -435,6 +542,33 @@ export default class RegisterResolver extends React.PureComponent<IRegisterResol
 
       RegisterResolver.resolverService
         .updateResolver(RegisterResolver.resolver, classContent);
+    }
+  }
+
+  private commitFileChanges(
+    fileContent: string,
+    destPath?: string,
+    filename?: string,
+  ): void {
+    if (!this.state.project) {
+      throw new Error('Unexpected error while commiting changes on the current resolver.');
+    }
+
+    if (this.state.isNew) {
+      if (!filename || !destPath) {
+        throw new Error('Missing properties for new file');
+      }
+
+      RegisterResolver.resolverService
+        .createFile(this.state.project.id, filename, destPath, fileContent);
+    } else {
+      if (!RegisterResolver.customFile) {
+        throw new Error('Missing selected file');
+      }
+
+      // Update file
+      RegisterResolver.resolverService
+        .updateFile(RegisterResolver.customFile.filePath, fileContent);
     }
   }
 }

@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 import * as ts from 'typescript';
-import { readFileSync, writeFileSync, unlinkSync } from 'fs';
+import { readFileSync, writeFileSync, unlinkSync, lstatSync, readdirSync, mkdirSync } from 'fs';
 import * as path from 'path';
 import * as scandir from 'klaw-sync';
 
@@ -11,6 +11,7 @@ export enum TypeResolver {
   Mutation = 'Mutation',
   Subscription = 'Subscription',
   Type = 'Type',
+  Generic = 'Generic',
 }
 
 export interface Import {
@@ -71,7 +72,7 @@ export class ResolverService {
   public getResolversFromProject(projectId: string): {resolvers: Resolver[], customFiles: CustomFile[]} {
     const resolversPath = path.join(getProjectPath(projectId), 'server', 'resolvers');
     const files = scandir(resolversPath, {
-        nodir: true
+      nodir: true
     });
     const resolvers: Resolver[] = [];
     const customFiles: CustomFile[] = [];
@@ -81,7 +82,7 @@ export class ResolverService {
         return;
       }
 
-      let type: TypeResolver;
+      let type: TypeResolver = TypeResolver.Generic;
       if (file.path.indexOf('queries') > -1) {
         type = TypeResolver.Query;
       } else if (file.path.indexOf('mutations') > -1) {
@@ -90,8 +91,6 @@ export class ResolverService {
         type = TypeResolver.Subscription;
       } else if (file.path.indexOf('types') > -1) {
         type = TypeResolver.Type;
-      } else {
-        return;
       }
 
       const classContent = readFileSync(file.path, 'utf8');
@@ -108,6 +107,31 @@ export class ResolverService {
     });
 
     return {resolvers, customFiles};
+  }
+
+  public getCustomFoldersFromProject(projectId: string): string[] {
+    const resolversPath = path.join(getProjectPath(projectId), 'server', 'resolvers');
+
+    const isReserved = (source: string) => (
+      !source.includes('queries')
+      && !source.includes('mutations')
+      && !source.includes('subscriptions')
+      && !source.includes('types')
+    );
+    const isAllowed = (source: string) => lstatSync(source).isDirectory() && !isReserved;
+    const getDirectories = (source: string) =>
+      readdirSync(source)
+        .map(
+          (name: string) => path.join(source, name)
+        )
+        .filter(
+          isAllowed
+        );
+
+    return [
+      '/',
+      ...getDirectories(resolversPath).map((path: string) => path.replace(resolversPath, ''))
+    ];
   }
 
   public createResolver(
@@ -154,8 +178,7 @@ export class ResolverService {
       .replace('common: ``,', '')
     ;
 
-    // Writing the file
-    // TODO: Check if it's already existing
+    // Write the file
     writeFileSync(
       destFilePath,
       classContent,
@@ -205,6 +228,82 @@ export class ResolverService {
       resolver.name,
       type
     );
+  }
+
+  public createFile(
+    projectId: string,
+    filename: string,
+    destPath: string,
+    fileContent: string,
+  ): void {
+    // Remove the first character if it's a slash + js/ts extentions
+    filename = filename[0] == '/'
+      ? filename
+        .replace(/\.ts|\.js/, '')
+        .substring(1, filename.length)
+      : filename;
+
+    // Split the filename and extracting
+    // the containing folder
+    const filenameParts = filename.split('/');
+    let newFolderName: string | null = null;
+    let newFilename: string;
+    if (filenameParts.length > 1) {
+      newFolderName = filenameParts[0];
+      newFilename = filenameParts[1];
+
+      // Create the containing folder
+      // TODO: Skip if already existing
+      mkdirSync(
+        path.join(
+          getProjectPath(projectId),
+          'server',
+          'resolvers',
+          (destPath != '/' && destPath != '' ? destPath : ''),
+          newFolderName
+        )
+      );
+    } else {
+      newFilename = filenameParts[0];
+    }
+
+    newFilename = newFilename[0] == '/'
+      ? newFilename.substring(1, newFilename.length)
+      : newFilename;
+    newFilename = newFilename.replace(/\W/ig, '-');
+
+    const fullFilepath = newFolderName != null
+      ? `${newFolderName}/${newFilename}.ts`
+      : `${newFilename}.ts`;
+
+    const destFilePath = path.join(
+      getProjectPath(projectId),
+      'server',
+      'resolvers',
+      (destPath != '/' && destPath != '' ? destPath : ''),
+      fullFilepath
+    );
+
+    this.updateFile(destFilePath, fileContent);
+  }
+
+  public updateFile(
+    filePath: string,
+    fileContent: string,
+  ): void {
+    writeFileSync(
+      filePath,
+      fileContent,
+      'utf8'
+    );
+  }
+
+  public deleteFile(
+    filePath: string,
+  ): void {
+    // TODO: In case the containing folder is empty,
+    // it should be removed as well
+    unlinkSync(filePath);
   }
 
   private registerResolver(
