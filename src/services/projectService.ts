@@ -76,7 +76,7 @@ export class ProjectService {
 
       if (existsSync(this.filePath)) {
         GitDownload(
-          'marcellobarile/typescript-express-graphql-seed#develop-apollo-2',
+          'marcellobarile/graphql-has#develop-apollo-2',
           getProjectPath(project),
           (err: any) => {
             if (err) {
